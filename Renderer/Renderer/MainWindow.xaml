@@ -45,9 +45,9 @@
 
 				<MenuItem Header="ヘルプ"></MenuItem>
 			</Menu>
-			<StatusBar Height="24" Margin="0" VerticalAlignment="Bottom" DockPanel.Dock="Bottom" Background="#FF2D2D30" BorderBrush="#FF3C3B3B" BorderThickness="0"/>
+			<!--<StatusBar Height="24" Margin="0" VerticalAlignment="Bottom" DockPanel.Dock="Bottom" Background="#FF2D2D30" BorderBrush="#FF3C3B3B" BorderThickness="0"/>-->
 
-			<Image Name="RenderImage" Grid.Column="0" Stretch="Fill" Margin="0,0,5,0"/>
+			<Image Name="RenderImage" Grid.Column="0" Stretch="Fill"/>
 
 			<!--<Grid DockPanel.Dock="Bottom">
 				<Grid.ColumnDefinitions>

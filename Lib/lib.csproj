@@ -7,8 +7,8 @@
     <ProjectGuid>{8908F195-D9AF-499C-800F-643CF77C7D75}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>ksLib</RootNamespace>
-    <AssemblyName>ksLib</AssemblyName>
+    <RootNamespace>Lib</RootNamespace>
+    <AssemblyName>Lib</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>
@@ -76,42 +76,44 @@
     <Reference Include="WindowsBase" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Archive.cs" />
-    <Compile Include="Buffer.cs" />
-    <Compile Include="Camera.cs" />
-    <Compile Include="CubemapHelper.cs" />
-    <Compile Include="D3DImageSlimDX.cs" />
-    <Compile Include="DepthOperation.cs" />
+    <Compile Include="System\Archive.cs" />
+    <Compile Include="Graphics\Core\Buffer.cs" />
+    <Compile Include="Graphics\Core\Camera.cs" />
+    <Compile Include="Graphics\CubemapHelper.cs" />
+    <Compile Include="Graphics\Core\D3DImageSlimDX.cs" />
+    <Compile Include="Graphics\DepthOperation.cs" />
     <Compile Include="Ext\MeshLoader.cs" />
     <Compile Include="Ext\ObjFileLoader.cs" />
-    <Compile Include="FileStream.cs" />
+    <Compile Include="System\FileStream.cs" />
     <Compile Include="Ext\GPUProfiler.cs" />
-    <Compile Include="Input.cs" />
-    <Compile Include="ReflectionCapture.cs" />
-    <Compile Include="Material.cs" />
-    <Compile Include="MaterialAdaptor.cs" />
-    <Compile Include="MaterialParam.cs" />
-    <Compile Include="Math.cs" />
-    <Compile Include="Model.cs" />
-    <Compile Include="Node.cs" />
-    <Compile Include="Prim.cs" />
+    <Compile Include="System\Input.cs" />
+    <Compile Include="Graphics\ReflectionCapture.cs" />
+    <Compile Include="Graphics\Core\Material.cs" />
+    <Compile Include="MVVM\MaterialAdaptor.cs" />
+    <Compile Include="MVVM\MaterialParam.cs" />
+    <Compile Include="System\Math.cs" />
+    <Compile Include="Graphics\Core\Model.cs" />
+    <Compile Include="Graphics\Core\Node.cs" />
+    <Compile Include="Graphics\Core\Prim.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Renderer.cs" />
-    <Compile Include="RenderingUtil.cs" />
-    <Compile Include="Shader.cs" />
-    <Compile Include="ShaderConstantBuffers.cs" />
-    <Compile Include="ShaderManager.cs" />
-    <Compile Include="ShadowMap.cs" />
-    <Compile Include="SHHelper.cs" />
-    <Compile Include="SSReflection.cs" />
-    <Compile Include="Texture.cs" />
-    <Compile Include="ToneMap.cs" />
-    <Compile Include="Util.cs" />
-    <Compile Include="ViewModelBase.cs" />
+    <Compile Include="Graphics\Core\RenderContext.cs" />
+    <Compile Include="Graphics\Core\Renderer.cs" />
+    <Compile Include="Graphics\RenderingUtil.cs" />
+    <Compile Include="Graphics\Core\Shader.cs" />
+    <Compile Include="Graphics\Core\ShaderConstantBuffers.cs" />
+    <Compile Include="Graphics\Core\ShaderManager.cs" />
+    <Compile Include="Graphics\ShadowMap.cs" />
+    <Compile Include="Graphics\SHHelper.cs" />
+    <Compile Include="Graphics\SSReflection.cs" />
+    <Compile Include="Graphics\Core\Texture.cs" />
+    <Compile Include="Graphics\ToneMap.cs" />
+    <Compile Include="System\Util.cs" />
+    <Compile Include="MVVM\ViewModelBase.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
