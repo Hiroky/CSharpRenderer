@@ -158,20 +158,20 @@ namespace Lib
 		/// <summary>
 		/// 描画
 		/// </summary>
-		public void Draw(int count = 1)
+		public void Draw(GraphicsContext context, int count = 1)
 		{
 			// 頂点バッファバインド
-			vertexBuffer_.Bind();
+			context.SetVertexBuffer(0, vertexBuffer_);
 
 			// マテリアル
-			material_.Setup();
+			material_.Setup(context);
 			ShaderManager.SetUniformParams(ref worldMatrix_);
 
 			// 描画
 			if (count > 1) {
-				GraphicsCore.D3dImmediateContext.DrawInstanced(vertexNum_, count, 0, 0);
+				context.DrawInstanced(0, vertexNum_, 0, count);
 			} else {
-				GraphicsCore.D3dImmediateContext.Draw(vertexNum_, 0);
+				context.Draw(0, vertexNum_);
 			}
 		}
 

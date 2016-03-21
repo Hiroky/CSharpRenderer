@@ -265,7 +265,7 @@ namespace Lib
 		/// <param name="data"></param>
 		public void Initialize(byte[] data)
 		{
-			var device = GraphicsCore.D3dDevice;
+			var device = GraphicsCore.D3D11Device;
 
 			// byte配列からポインタを取得
 			var handle = GCHandle.Alloc(data, GCHandleType.Pinned);
@@ -313,7 +313,7 @@ namespace Lib
 		/// <param name="data"></param>
 		public void Initialize(InitDesc desc)
 		{
-			var device = GraphicsCore.D3dDevice;
+			var device = GraphicsCore.D3D11Device;
 			shaderId_ = desc.id;
 			name_ = desc.name;
 
@@ -442,17 +442,16 @@ namespace Lib
 		/// <summary>
 		/// コンテキストにバインドする
 		/// </summary>
-		public void Bind()
+		public void Bind(GraphicsContext context)
 		{
-			var context = GraphicsCore.D3dImmediateContext;
-			context.InputAssembler.InputLayout = inputLayout_;
-			context.VertexShader.Set(vertexShader_);
-			context.PixelShader.Set(pixelShader_);
+			context.SetInputLayout(inputLayout_);
+			context.SetVsShader(vertexShader_);
+			context.SetPsShader(pixelShader_);
 
 			// コンスタントバッファ
-			context.VertexShader.SetConstantBuffers(nativeCBuffers_, 0, cbufferNum_);
+			context.SetVsConstantBuffer(nativeCBuffers_, 0, cbufferNum_);
 			if (pixelShader_ != null) {
-				context.PixelShader.SetConstantBuffers(nativeCBuffers_, 0, cbufferNum_);
+				context.SetPsConstantBuffer(nativeCBuffers_, 0, cbufferNum_);
 			}
 		}
 
@@ -482,7 +481,7 @@ namespace Lib
 						buffer_desc.CpuAccessFlags = CpuAccessFlags.None;
 						buffer_desc.BindFlags = BindFlags.ConstantBuffer;
 						buffer_desc.SizeInBytes = obj.inst_.BufferSize;
-						obj.buffer_ = new D3D11Buffer(GraphicsCore.D3dDevice, buffer_desc);
+						obj.buffer_ = new D3D11Buffer(GraphicsCore.D3D11Device, buffer_desc);
 						constantBufferDictionary_[n] = obj;
 					}
 
@@ -783,7 +782,7 @@ namespace Lib
 		/// <param name="desc"></param>
 		public ComputeShader(InitDesc desc)
 		{
-			var device = GraphicsCore.D3dDevice;
+			var device = GraphicsCore.D3D11Device;
 
 			var inc = new ShaderIncludeHandler(System.IO.Path.GetDirectoryName(desc.file_name));
 			using (var bytecode = ShaderBytecode.CompileFromFile(desc.file_name, desc.main, "cs_5_0", ShaderFlags.None, EffectFlags.None, desc.macro, inc)) {
@@ -797,7 +796,7 @@ namespace Lib
 						buffer_desc.CpuAccessFlags = CpuAccessFlags.None;
 						buffer_desc.BindFlags = BindFlags.ConstantBuffer;
 						buffer_desc.SizeInBytes = cbInst_.BufferSize;
-						constantBuffer_ = new D3D11Buffer(GraphicsCore.D3dDevice, buffer_desc);
+						constantBuffer_ = new D3D11Buffer(GraphicsCore.D3D11Device, buffer_desc);
 					}
 				}
 			}
@@ -826,7 +825,7 @@ namespace Lib
 			buffer_desc.CpuAccessFlags = CpuAccessFlags.None;
 			buffer_desc.BindFlags = BindFlags.ConstantBuffer;
 			buffer_desc.SizeInBytes = bufferSize;
-			constantBuffer_ = new D3D11Buffer(GraphicsCore.D3dDevice, buffer_desc);
+			constantBuffer_ = new D3D11Buffer(GraphicsCore.D3D11Device, buffer_desc);
 		}
 
 		/// <summary>
@@ -838,7 +837,7 @@ namespace Lib
 			byte[] data = cbInst_.Buffer;
 			SlimDX.DataStream s = new SlimDX.DataStream(data, true, true);
 			SlimDX.DataBox box = new SlimDX.DataBox(0, 0, s);
-			GraphicsCore.D3dImmediateContext.UpdateSubresource(box, constantBuffer_, 0);
+			GraphicsCore.D3D11ImmediateContext.UpdateSubresource(box, constantBuffer_, 0);
 			s.Close();
 		}
 
@@ -857,7 +856,7 @@ namespace Lib
 		/// </summary>
 		public void Bind()
 		{
-			var context = GraphicsCore.D3dImmediateContext;
+			var context = GraphicsCore.D3D11ImmediateContext;
 			context.ComputeShader.Set(shader_);
 			context.ComputeShader.SetConstantBuffer(constantBuffer_, 0);
 			if( resources_ != null ) {
@@ -882,7 +881,7 @@ namespace Lib
 		/// </summary>
 		public void UnBind()
 		{
-			var context = GraphicsCore.D3dImmediateContext;
+			var context = GraphicsCore.D3D11ImmediateContext;
 			context.ComputeShader.Set(null);
 			context.ComputeShader.SetConstantBuffer(null, 0);
 			if (resources_ != null) {
@@ -899,7 +898,7 @@ namespace Lib
 		/// </summary>
 		public void Dispatch(int x, int y, int z)
 		{
-			GraphicsCore.D3dImmediateContext.Dispatch(x, y, z);
+			GraphicsCore.D3D11ImmediateContext.Dispatch(x, y, z);
 		}
 
 		/// <summary>

@@ -6,6 +6,8 @@ using System.Threading.Tasks;
 
 using SlimDX;
 using SlimDX.Direct3D11;
+using D3D11Buffer = SlimDX.Direct3D11.Buffer;
+using D3D11Resource = SlimDX.Direct3D11.Resource;
 
 namespace Lib
 {
@@ -15,6 +17,12 @@ namespace Lib
 	public class GraphicsContext
 	{
 		private DeviceContext context_;
+
+		static readonly private PrimitiveTopology[] primitiveTopology_ = new PrimitiveTopology[] {
+			PrimitiveTopology.TriangleList,
+			PrimitiveTopology.LineList,
+		};
+
 
 		/// <summary>
 		/// コンストラクタ
@@ -59,6 +67,30 @@ namespace Lib
 		}
 
 		/// <summary>
+		/// 描画
+		/// </summary>
+		public void Draw(int start, int count)
+		{
+			context_.Draw(count, start);
+		}
+		public void DrawIndexed(int start, int count)
+		{
+			context_.DrawIndexed(count, start, 0);
+		}
+
+		/// <summary>
+		/// インスタンス描画
+		/// </summary>
+		public void DrawInstanced(int indexStart, int indexCount, int instanceStart, int instanceCount)
+		{
+			GraphicsCore.D3D11ImmediateContext.DrawInstanced(indexCount, instanceCount, indexStart, instanceStart);
+		}
+		public void DrawIndexedInstanced(int indexStart, int indexCount, int instanceStart, int instanceCount)
+		{
+			GraphicsCore.D3D11ImmediateContext.DrawIndexedInstanced(indexCount, instanceCount, indexStart, 0, instanceStart);
+		}
+
+		/// <summary>
 		/// ビューポートの設定
 		/// </summary>
 		public void SetViewport(Viewport viewport)
@@ -96,6 +128,24 @@ namespace Lib
 		public void SetInputLayout(InputLayout layout)
 		{
 			context_.InputAssembler.InputLayout = layout;
+		}
+
+		/// <summary>
+		/// 頂点バッファ
+		/// </summary>
+		public void SetVertexBuffer(int slot, VertexBuffer vertex)
+		{
+			SetPrimitiveTopology(vertex.Topology);	// 仮
+			context_.InputAssembler.SetVertexBuffers(slot, new VertexBufferBinding((D3D11Buffer)vertex.Resource, vertex.Stride, 0));
+		}
+
+		/// <summary>
+		/// インデックスバッファ
+		/// </summary>
+		public void SetIndexBuffer(IndexBuffer index)
+		{
+			// 現状32bitインデックス固定
+			context_.InputAssembler.SetIndexBuffer((D3D11Buffer)index.Resource, SlimDX.DXGI.Format.R32_UInt, 0);
 		}
 
 		/// <summary>
@@ -174,9 +224,9 @@ namespace Lib
 		/// <summary>
 		/// ラスタライザステート設定
 		/// </summary>
-		public void SetPrimitiveTopology(PrimitiveTopology state)
+		public void SetPrimitiveTopology(RenderState.PrimitiveTopology state)
 		{
-			context_.InputAssembler.PrimitiveTopology = state;
+			context_.InputAssembler.PrimitiveTopology = primitiveTopology_[(int)state];
 		}
 
 

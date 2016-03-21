@@ -96,7 +96,7 @@ namespace Lib
 			frameBuffer_.color_buffer_ = new Texture[1] { linearBuffer_ };
 			frameBuffer_.depth_stencil_ = null;
 			context.SetRenderTargets(frameBuffer_.color_buffer_, frameBuffer_.depth_stencil_);
-			RenderingUtil.DrawScreen(linearizeShader_, new Texture[] { depth });
+			RenderingUtil.DrawScreen(context, linearizeShader_, new Texture[] { depth });
 		}
 	}
 }

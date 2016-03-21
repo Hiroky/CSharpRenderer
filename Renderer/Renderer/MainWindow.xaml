@@ -5,9 +5,7 @@
 		xmlns:local="clr-namespace:Renderer"
 		Name="Window"
         Title="RenderingDemo" Height="720" Width="1280" Visibility="Visible" MinWidth="256" MinHeight="256" Background="#FF2D2D30" >
-	<WindowChrome.WindowChrome>
-		<WindowChrome CaptionHeight="23" ResizeBorderThickness="10" />
-	</WindowChrome.WindowChrome>
+	
 	<Window.Resources>
 		<!--<local:ViewItems x:Key="ViewItemList" />
 		<local:TiledRenderItems x:Key="TiledRenderItems" />-->
@@ -15,23 +13,10 @@
 		<SolidColorBrush Color="White" x:Key="labelColor" />
 	</Window.Resources>
 	
-	<Border DockPanel.Dock="Top" BorderBrush="#FF1D79B8"
-            BorderThickness="1">
-		<DockPanel Margin="5">
-			<Grid DockPanel.Dock="Top" Background="#FF2D2D30" Height="32">
-				<StackPanel Orientation="Horizontal">
-					<Image Name="WindowIcon" Source="{Binding Icon, ElementName=Window}" Height="32" Width="32" HorizontalAlignment="Left" ></Image>
-					<Label Content="RenderingDemo" Foreground="#FFCDA9A9" FontSize="14" />
-				</StackPanel>
-				<StackPanel Orientation="Horizontal"
-                        HorizontalAlignment="Right"
-                        VerticalAlignment="Top" Height="32" Width="90">
-					<Button Content="0" Style="{DynamicResource CaptionButtonStyleKey}" Click="MinimizeButton_Click" FontSize="14" Margin="0" Width="30"/>
-					<Button x:Name="windowModeChangeButton" Content="1" Style="{DynamicResource CaptionButtonStyleKey}" Click="MaximizeButton_Click" FontSize="14" Margin="0" Width="30"/>
-					<Button Content="r" Style="{DynamicResource CaptionButtonStyleKey}" Click="CloseButton_Click" FontSize="14" Margin="0" Width="30"/>
-				</StackPanel>
-			</Grid>
+	<Border DockPanel.Dock="Top" BorderBrush="#FF1D79B8" BorderThickness="1">
+		<DockPanel Margin="0">
 			<Menu DockPanel.Dock="Top" Height="20" Background="#FF2D2D30" Foreground="#FFE2E1E1">
+				<!--
 				<MenuItem Header="ファイル" Height="20">
 					<MenuItem Header="Load Model" Foreground="Black" Click="ModelLoadMenuItem_Click"></MenuItem>
 					<MenuItem Header="Load CubeMap" Foreground="Black" Click="LoadSkyboxMenuItem_Click"></MenuItem>
@@ -39,13 +24,13 @@
 					<Separator></Separator>
 					<MenuItem Header="終了" Foreground="Black"></MenuItem>
 				</MenuItem>
+				-->
 				<MenuItem Header="描画設定">
 					<MenuItem Name="MenuItemEnableFXAA" Header="FXAA" IsCheckable="True" Foreground="Black" IsChecked="{Binding IsEnableFXAA}"></MenuItem>
 				</MenuItem>
 
 				<MenuItem Header="ヘルプ"></MenuItem>
 			</Menu>
-			<!--<StatusBar Height="24" Margin="0" VerticalAlignment="Bottom" DockPanel.Dock="Bottom" Background="#FF2D2D30" BorderBrush="#FF3C3B3B" BorderThickness="0"/>-->
 
 			<!--<Image Name="RenderImage" Grid.Column="0" Stretch="Fill"/>-->
 			<WindowsFormsHost Name="formsHost">
@@ -54,7 +39,9 @@
 				</WindowsFormsHost.Child>
 			</WindowsFormsHost>
 
-			<!--<Grid DockPanel.Dock="Bottom">
+			
+			<!--
+			<Grid DockPanel.Dock="Bottom">
 				<Grid.ColumnDefinitions>
 					<ColumnDefinition Width="483*"/>
 					<ColumnDefinition Width="188*"/>
@@ -103,7 +90,9 @@
 					</StackPanel>
 					<Rectangle Stroke="#FF515151"/>
 				</Grid>
-			</Grid>-->
+			</Grid>
+			-->
+			
 		</DockPanel>
 	</Border>
 </Window>

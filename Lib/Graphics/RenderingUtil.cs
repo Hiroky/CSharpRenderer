@@ -26,13 +26,13 @@ namespace Lib
 		}
 
 		
-		static public void DrawScreen(Shader shader, Texture[] textures)
+		static public void DrawScreen(GraphicsContext context, Shader shader, Texture[] textures)
 		{
 			for(int i = 0; i < textures.Length; i++){
 				prim_.GetMaterial().SetShaderViewPS(i, textures[i]);
 			}
 			prim_.GetMaterial().SetShader(shader);
-			prim_.Draw();
+			prim_.Draw(context);
 		}
 	}
 }

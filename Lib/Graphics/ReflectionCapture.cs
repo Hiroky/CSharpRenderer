@@ -153,13 +153,13 @@ namespace Lib
 		/// <summary>
 		/// デバッグ描画
 		/// </summary>
-		public void DebugDraw()
+		public void DebugDraw(GraphicsContext context)
 		{
 			if (debugModel_ != null) {
 				currentSHCoef_ = SHCoef;
 				debugModel_.Materials[0].SetShaderViewPS(0, Map);
 				debugModel_.WorldMatrix = Matrix.Translation(Position);
-				debugModel_.Draw();
+				debugModel_.Draw(context);
 			}
 		}
 	}

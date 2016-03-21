@@ -101,7 +101,7 @@ namespace Renderer
 			ShaderManager.DefaultShader = "Unlit";
 
 			// プロファイラ
-			MyGPUProfiler.Initialize(GraphicsCore.D3dDevice);
+			MyGPUProfiler.Initialize();
 
 			// ライト
 			GraphicsCore.LightPos = new Vector4(0, 100000, 0, 1);
@@ -220,29 +220,6 @@ namespace Renderer
 		{
 			//scene_.LoadModel(file_name);
 		}
-
-
-		private void CloseButton_Click(object sender, RoutedEventArgs e)
-		{
-			Close();
-		}
-
-		private void MaximizeButton_Click(object sender, RoutedEventArgs e)
-		{
-			if (WindowState == System.Windows.WindowState.Normal) {
-				WindowState = System.Windows.WindowState.Maximized;
-				windowModeChangeButton.Content = 2;
-			} else {
-				WindowState = System.Windows.WindowState.Normal;
-				windowModeChangeButton.Content = 1;
-			}
-		}
-
-		private void MinimizeButton_Click(object sender, RoutedEventArgs e)
-		{
-			WindowState = System.Windows.WindowState.Minimized;
-		}
-
 
 
 		private void ModelLoadMenuItem_Click(object sender, RoutedEventArgs e)

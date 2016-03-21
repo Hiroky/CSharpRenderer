@@ -213,10 +213,10 @@ namespace Lib
 		/// <summary>
 		/// GPUにセットアップをかける
 		/// </summary>
-		public void Setup()
+		public void Setup(GraphicsContext context)
 		{
 			// シェーダ
-			ShaderManager.BindShader(shader_inst_);
+			ShaderManager.BindShader(context, shader_inst_);
 
 			// マテリアルパラメータ
 			ShaderManager.SetMaterialParam(this);
@@ -224,7 +224,7 @@ namespace Lib
 			// テクスチャ
 			for (int i = 0; i < psShaderViews_.Length; i++) {
 				if (psShaderViews_[i] == null) break;
-				GraphicsCore.SetShaderResourcePS(i, psShaderViews_[i]);
+				context.SetShaderResourcePS(i, psShaderViews_[i]);
 				Texture tex = psShaderViews_[i] as Texture;
 				if (tex != null) {
 					GraphicsCore.SetSamplerStatePS(i, tex.AddressingModeU, tex.AddressingModeV);
@@ -232,7 +232,7 @@ namespace Lib
 			}
 			for (int i = 0; i < vsShaderViews_.Length; i++) {
 				if (vsShaderViews_[i] == null) break;
-				GraphicsCore.SetShaderResourceVS(i, vsShaderViews_[i]);
+				context.SetShaderResourceVS(i, vsShaderViews_[i]);
 				Texture tex = vsShaderViews_[i] as Texture;
 				if (tex != null) {
 					GraphicsCore.SetSamplerStateVS(i, tex.AddressingModeU, tex.AddressingModeV);

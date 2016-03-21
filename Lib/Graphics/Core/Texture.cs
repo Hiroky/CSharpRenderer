@@ -161,9 +161,9 @@ namespace Lib
 		public void SaveFile(string fileName)
 		{
 			if (buffer_.Resource is Texture2D) {
-				Texture2D.SaveTextureToFile(GraphicsCore.D3dImmediateContext, buffer_.Resource, ImageFileFormat.Dds, fileName);
+				Texture2D.SaveTextureToFile(GraphicsCore.D3D11ImmediateContext, buffer_.Resource, ImageFileFormat.Dds, fileName);
 			} else if (buffer_.Resource is Texture3D) {
-				Texture3D.SaveTextureToFile(GraphicsCore.D3dImmediateContext, buffer_.Resource, ImageFileFormat.Dds, fileName);
+				Texture3D.SaveTextureToFile(GraphicsCore.D3D11ImmediateContext, buffer_.Resource, ImageFileFormat.Dds, fileName);
 			}
 		}
 	}

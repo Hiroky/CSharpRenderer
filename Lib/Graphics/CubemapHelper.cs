@@ -155,7 +155,7 @@ namespace Lib
 			frameBuffer.color_buffer_ = new Texture[1] { tex };
 
 			context.SetRenderTargets(frameBuffer.color_buffer_, null);
-			prim.Draw();
+			prim.Draw(context);
 			prim.Dispose();
 			return tex;
 		}

@@ -123,19 +123,19 @@ namespace Lib
 			context.SetViewport(new SlimDX.Direct3D11.Viewport(0, 0, blurFrameBuffer_.color_buffer_[0].Width, blurFrameBuffer_.color_buffer_[0].Height));
 			blurPrim_.GetMaterial().SetShader(shaderName_[(int)type_]);
 			blurPrim_.GetMaterial().SetShaderViewPS(0, shadowMap_);
-			blurPrim_.Draw();
+			blurPrim_.Draw(context);
 
 			blurFrameBuffer_.color_buffer_[0] = blurMap_[1];
 			context.SetRenderTargets(blurFrameBuffer_.color_buffer_, blurFrameBuffer_.depth_stencil_);
 			blurPrim_.GetMaterial().SetShader("GaussianBlurV");
 			blurPrim_.GetMaterial().SetShaderViewPS(0, blurMap_[0]);
-			blurPrim_.Draw();
+			blurPrim_.Draw(context);
 
 			blurFrameBuffer_.color_buffer_[0] = blurMap_[0];
 			context.SetRenderTargets(blurFrameBuffer_.color_buffer_, blurFrameBuffer_.depth_stencil_);
 			blurPrim_.GetMaterial().SetShader("GaussianBlurH");
 			blurPrim_.GetMaterial().SetShaderViewPS(0, blurMap_[1]);
-			blurPrim_.Draw();
+			blurPrim_.Draw(context);
 		}
 	}
 }

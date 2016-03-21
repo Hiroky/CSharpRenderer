@@ -231,7 +231,7 @@ namespace Renderer
 					prim_.GetMaterial().SetShaderViewPS(0, gbuffers_[0]);
 					prim_.GetMaterial().SetShaderViewPS(1, gbuffers_[1]);
 					prim_.GetMaterial().BlendState = RenderState.BlendState.None;
-					prim_.Draw();
+					prim_.Draw(context);
 
 					//framebuffer.color_buffer_ = new Texture[] { gbuffers_[1] };
 					//ksRenderer.BeginRender(framebuffer);
@@ -246,22 +246,22 @@ namespace Renderer
 					framebuffer.color_buffer_ = new Texture[] { gbuffers_[0] };
 					context.SetRenderTargets(framebuffer.color_buffer_, framebuffer.depth_stencil_);
 					if (test) {
-						MyRenderer.D3dImmediateContext.InputAssembler.SetVertexBuffers(0, new VertexBufferBinding());
+						MyRenderer.D3D11ImmediateContext.InputAssembler.SetVertexBuffers(0, new VertexBufferBinding());
 						lineSpriteMaterial_.SetShaderViewVS(0, edgeBuffer);
 						lineSpriteMaterial_.SetShaderViewPS(0, lineTexture_);
 						lineSpriteMaterial_.DepthState = RenderState.DepthState.None;
 						lineSpriteMaterial_.BlendState = RenderState.BlendState.Normal;
-						lineSpriteMaterial_.Setup();
+						lineSpriteMaterial_.Setup(context);
 						Matrix ident = Matrix.Identity;
 						ShaderManager.SetUniformParams(ref ident);
 						MyRenderer.SetRasterizerState(RenderState.RasterizerState.CullNone);
 						int instance = hdrResolveBuffer_.Width * hdrResolveBuffer_.Height;
-						MyRenderer.D3dImmediateContext.DrawInstanced(6, instance, 0, 0);
+						MyRenderer.D3D11ImmediateContext.DrawInstanced(6, instance, 0, 0);
 					} else {
 						prim_.GetMaterial().SetShader("Direct");
 						prim_.GetMaterial().SetShaderViewPS(0, hdrResolveBuffer_);
 						prim_.GetMaterial().BlendState = RenderState.BlendState.Normal;
-						prim_.Draw();
+						prim_.Draw(context);
 					}
 				}
 
@@ -273,7 +273,7 @@ namespace Renderer
 					using (new ksGpuProfilePoint(context, "FXAA")) {
 						fxaaPrim_.GetMaterial().SetShaderViewPS(0, gbuffers_[0]);
 						fxaaPrim_.GetMaterial().BlendState = RenderState.BlendState.None;
-						fxaaPrim_.Draw();
+						fxaaPrim_.Draw(context);
 					}
 				}
 			}
@@ -283,10 +283,10 @@ namespace Renderer
 		/// <summary>
 		/// シーン描画
 		/// </summary>
-		void SceneDraw()
+		void SceneDraw(GraphicsContext context)
 		{
 			if (drawModel_ != null) {
-				drawModel_.Draw();
+				drawModel_.Draw(context);
 			}
 		}
 
@@ -303,7 +303,7 @@ namespace Renderer
 			context.ClearRenderTarget(gBufferBinder_.color_buffer_[1], new Color4(0));
 			context.ClearDepthStencil(gBufferBinder_.depth_stencil_, 1.0f);
 
-			SceneDraw();
+			SceneDraw(context);
 		}
 
 

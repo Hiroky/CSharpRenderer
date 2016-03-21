@@ -351,7 +351,7 @@ namespace Renderer
 				using (new MyGpuProfilePoint(context, "Create ShadowMap")) {
 					shadowMap_.BeginRender(context);
 					{
-						SceneDraw();
+						SceneDraw(context);
 					}
 					shadowMap_.EndRender(context);
 				}
@@ -409,10 +409,10 @@ namespace Renderer
 						toneMap_.CalcLuminance(context, uav_);
 						context.SetRenderTargets(hdrResultBuffer_.color_buffer_, null);
 						toneMap_.KeyValue = viewModel_.ToneMapKeyValue;
-						toneMap_.ResolveHDR(uav_);
+						toneMap_.ResolveHDR(context, uav_);
 					} else {
 						context.SetRenderTargets(hdrResultBuffer_.color_buffer_, null);
-						toneMap_.ResolveGamma(uav_);
+						toneMap_.ResolveGamma(context, uav_);
 					}
 				}
 
@@ -424,10 +424,10 @@ namespace Renderer
 					// ライティング結果
 					if (ViewModel.IsEnableFXAA && ViewModel.ViewIndex == (int)ViewItems.Type.Result) {
 						using (new MyGpuProfilePoint(context, "FXAA")) {
-							fxaaPrim_.Draw();
+							fxaaPrim_.Draw(context);
 						}
 					} else {
-						prim_.Draw();
+						prim_.Draw(context);
 					}
 				}
 			}
@@ -437,10 +437,10 @@ namespace Renderer
 		/// <summary>
 		/// シーン描画
 		/// </summary>
-		void SceneDraw()
+		void SceneDraw(GraphicsContext context)
 		{
 			if (drawModel_ != null) {
-				drawModel_.Draw();
+				drawModel_.Draw(context);
 			}
 		}
 
@@ -459,7 +459,7 @@ namespace Renderer
 			context.ClearDepthStencil(deferredBuffer_.depth_stencil_, 1.0f);
 			context.SetViewport(new Viewport(0, 0, deferredBuffer_.color_buffer_[0].Width, deferredBuffer_.color_buffer_[0].Height));
 
-			SceneDraw();
+			SceneDraw(context);
 		}
 
 
@@ -495,10 +495,10 @@ namespace Renderer
 				//context.ClearRenderTarget(new Color4(1, 0, 0, 0));
 				//context.ClearDepthStencil();
 				int shadowMapBindingPoint = 4;
-				GraphicsCore.SetShaderResourcePS(shadowMapBindingPoint, shadowMap_.Map);
+				context.SetShaderResourcePS(shadowMapBindingPoint, shadowMap_.Map);
 				GraphicsCore.SetSamplerStatePS(shadowMapBindingPoint, shadowMap_.Map.AddressingModeU, shadowMap_.Map.AddressingModeV);
 				ShaderManager.UserShaderBindHandler += overrideFunc;
-				SceneDraw();
+				SceneDraw(context);
 				ShaderManager.UserShaderBindHandler -= overrideFunc;
 			};
 

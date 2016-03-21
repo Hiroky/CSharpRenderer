@@ -56,8 +56,10 @@ namespace Lib.Ext
 		{
 		}
 
-		public static void Initialize(Device device)
+		public static void Initialize()
 		{
+			var device = GraphicsCore.D3D11Device;
+
 			m_HWQueries = new List<Query>();
 			m_HWQueriesDescs = new List<String>();
 			m_QueriesStack = new Stack<int>();

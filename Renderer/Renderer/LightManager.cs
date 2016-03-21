@@ -149,9 +149,9 @@ namespace Renderer
 		}
 
 
-		public void DebugDraw()
+		public void DebugDraw(GraphicsContext context)
 		{
-			debugPrim_.Draw((int)count_);
+			debugPrim_.Draw(context, (int)count_);
 		}
 	}
 }

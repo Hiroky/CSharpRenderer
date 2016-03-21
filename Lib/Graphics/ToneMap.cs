@@ -130,39 +130,39 @@ namespace Lib
 			context.SetRenderTargets(frameBuffer_.color_buffer_, null);
 			prim_.GetMaterial().SetShader(downSample4Lum_);
 			prim_.GetMaterial().SetShaderViewPS(0, colorTex);
-			prim_.Draw();
+			prim_.Draw(context);
 
 			// 1/4
 			frameBuffer_.color_buffer_[0] = avgBuffer_[1];
 			context.SetRenderTargets(frameBuffer_.color_buffer_, null);
 			prim_.GetMaterial().SetShader(downSample4_);
 			prim_.GetMaterial().SetShaderViewPS(0, avgBuffer_[0]);
-			prim_.Draw();
+			prim_.Draw(context);
 
 			// 1/2
 			frameBuffer_.color_buffer_[0] = avgBuffer_[2];
 			context.SetRenderTargets(frameBuffer_.color_buffer_, null);
 			prim_.GetMaterial().SetShader(downSample2_);
 			prim_.GetMaterial().SetShaderViewPS(0, avgBuffer_[1]);
-			prim_.Draw();
+			prim_.Draw(context);
 
 			// 1/2
 			frameBuffer_.color_buffer_[0] = avgBuffer_[3];
 			context.SetRenderTargets(frameBuffer_.color_buffer_, null);
 			prim_.GetMaterial().SetShaderViewPS(0, avgBuffer_[2]);
-			prim_.Draw();
+			prim_.Draw(context);
 
 			// 1/2
 			frameBuffer_.color_buffer_[0] = avgBuffer_[4];
 			context.SetRenderTargets(frameBuffer_.color_buffer_, null);
 			prim_.GetMaterial().SetShaderViewPS(0, avgBuffer_[3]);
-			prim_.Draw();
+			prim_.Draw(context);
 
 			// 1/2
 			frameBuffer_.color_buffer_[0] = avgBuffer_[5];
 			context.SetRenderTargets(frameBuffer_.color_buffer_, null);
 			prim_.GetMaterial().SetShaderViewPS(0, avgBuffer_[4]);
-			prim_.Draw();
+			prim_.Draw(context);
 
 			// 最終
 			if (!initBuffer_) {
@@ -180,23 +180,23 @@ namespace Lib
 		/// HDR解決
 		/// </summary>
 		/// <param name="uav"></param>
-		public void ResolveHDR(Texture colorTex)
+		public void ResolveHDR(GraphicsContext context, Texture colorTex)
 		{
 			prim_.GetMaterial().SetShader(toneMap_);
 			prim_.GetMaterial().SetShaderViewPS(0, colorTex);
 			prim_.GetMaterial().SetShaderViewPS(1, luminanceAvg_);
-			prim_.Draw();
+			prim_.Draw(context);
 		}
 
 		/// <summary>
 		/// ガンマの解決のみ実行
 		/// </summary>
 		/// <param name="colorTex"></param>
-		public void ResolveGamma(Texture colorTex)
+		public void ResolveGamma(GraphicsContext context, Texture colorTex)
 		{
 			prim_.GetMaterial().SetShader(resolveGamma_);
 			prim_.GetMaterial().SetShaderViewPS(0, colorTex);
-			prim_.Draw();
+			prim_.Draw(context);
 		}
 	}
 }

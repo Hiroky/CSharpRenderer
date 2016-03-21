@@ -236,7 +236,7 @@ namespace Lib
 		/// </summary>
 		/// <param name="shader"></param>
 		public
-		static void BindShader(Shader shader)
+		static void BindShader(GraphicsContext context, Shader shader)
 		{
 			// シェーダオーバーライド
 			if (UserShaderBindHandler != null) {
@@ -246,7 +246,7 @@ namespace Lib
 			//使用シェーダに変更がある場合のみバインド
 			if (activeShader_ != shader) {
 				activeShader_ = shader;
-				activeShader_.Bind();
+				activeShader_.Bind(context);
 			}
 		}
 
@@ -286,7 +286,7 @@ namespace Lib
 
 				DataStream s = new DataStream(cbTrans.inst_.Buffer, true, true);
 				DataBox box = new DataBox(0, 0, s);
-				GraphicsCore.D3dImmediateContext.UpdateSubresource(box, cbTrans.buffer_, 0);
+				GraphicsCore.D3D11ImmediateContext.UpdateSubresource(box, cbTrans.buffer_, 0);
 				s.Close();
 			}
 
@@ -298,7 +298,7 @@ namespace Lib
 					byte[] data = o.inst_.Buffer;
 					DataStream s = new DataStream(data, true, true);
 					DataBox box = new DataBox(0, 0, s);
-					GraphicsCore.D3dImmediateContext.UpdateSubresource(box, o.buffer_, 0);
+					GraphicsCore.D3D11ImmediateContext.UpdateSubresource(box, o.buffer_, 0);
 					s.Close();
 				}
 			}
@@ -324,7 +324,7 @@ namespace Lib
 					}
 					s.Position = 0;
 					DataBox box = new DataBox(0, 0, s);
-					GraphicsCore.D3dImmediateContext.UpdateSubresource(box, Shader.ConstantBufferDictionary["CB_User"].buffer_, 0);
+					GraphicsCore.D3D11ImmediateContext.UpdateSubresource(box, Shader.ConstantBufferDictionary["CB_User"].buffer_, 0);
 					s.Close();
 				}
 			}

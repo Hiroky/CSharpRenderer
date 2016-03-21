@@ -107,18 +107,18 @@ namespace Lib
 		/// <summary>
 		/// 描画
 		/// </summary>
-		public void Draw()
+		public void Draw(GraphicsContext context)
 		{
-			vertexBuffer_.Bind();
-			indexBuffer_.Bind();
+			context.SetVertexBuffer(0, vertexBuffer_);
+			context.SetIndexBuffer(indexBuffer_);
 
 			for (int i = 0; i < nodes_.Length; i++) {
 				if (nodes_[i].Subsets == null) continue;
 				foreach (var s in nodes_[i].Subsets) {
-					materials_[s.materialIndex].Setup();
+					materials_[s.materialIndex].Setup(context);
 					ShaderManager.SetUniformParams(ref worldMatrix_);
 
-					GraphicsCore.D3dImmediateContext.DrawIndexed(s.endIndex - s.startIndex, s.startIndex, 0);
+					context.DrawIndexed(s.startIndex, s.endIndex - s.startIndex);
 				}
 			}
 		}
@@ -126,19 +126,19 @@ namespace Lib
 		/// <summary>
 		/// マテリアルを指定した描画
 		/// </summary>
-		public void Draw(string material)
+		public void Draw(GraphicsContext context, string material)
 		{
-			vertexBuffer_.Bind();
-			indexBuffer_.Bind();
+			context.SetVertexBuffer(0, vertexBuffer_);
+			context.SetIndexBuffer(indexBuffer_);
 
 			for (int i = 0; i < nodes_.Length; i++) {
 				if (nodes_[i].Subsets == null) continue;
 				foreach (var s in nodes_[i].Subsets) {
 					if (materials_[s.materialIndex].Name == material) {
-						materials_[s.materialIndex].Setup();
+						materials_[s.materialIndex].Setup(context);
 						ShaderManager.SetUniformParams(ref worldMatrix_);
 
-						GraphicsCore.D3dImmediateContext.DrawIndexed(s.endIndex - s.startIndex, s.startIndex, 0);
+						context.DrawIndexed(s.startIndex, s.endIndex - s.startIndex);
 					}
 				}
 			}
