@@ -133,7 +133,7 @@ namespace Renderer
 		void InitialzeSceneObject()
 		{
 			drawModel_ = new Model();
-			drawModel_.Initialize("D:/Development/Model/Convert/dae/azusa.dae");
+			drawModel_.Initialize("./dae/test.dae");
 			foreach (var m in drawModel_.Materials) {
 				m.SetShader("Cell", (uint)(Shader.VertexAttr.POSITION | Shader.VertexAttr.NORMAL | Shader.VertexAttr.TEXCOORD0));
 			}

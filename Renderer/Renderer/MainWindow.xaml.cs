@@ -125,14 +125,15 @@ namespace Renderer
 			isRun_ = true;
 			renderTask_ = new Task(() => {
 				while (isRun_) {
-					var context = GraphicsCore.ImmediateContext;
-
 					// リサイズ
 					if (requireResize) {
 						GraphicsCore.ResizeTargetPanel((int)renderCtrl.Width, (int)renderCtrl.Height);
 						scene_.ScreenSizeChanged((int)renderCtrl.Width, (int)renderCtrl.Height);
 						requireResize = false;
 					}
+
+					// 描画
+					var context = GraphicsCore.ImmediateContext;
 					scene_.Update();
 					MyGPUProfiler.BeginFrameProfiling(context);
 					scene_.Draw();

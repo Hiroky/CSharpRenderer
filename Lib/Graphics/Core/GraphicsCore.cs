@@ -173,10 +173,10 @@ namespace Lib
 		{
 			Initialize(form.Handle, form.ClientSize.Width, form.ClientSize.Height);
 
-			// リサイズコールバック
-			form.UserResized += (o, e) => {
-				ResizeTargetPanel(form.ClientSize.Width, form.ClientSize.Height);
-			};
+			//// リサイズコールバック
+			//form.UserResized += (o, e) => {
+			//	ResizeTargetPanel(form.ClientSize.Width, form.ClientSize.Height);
+			//};
 		}
 
 		/// <summary>
@@ -188,9 +188,9 @@ namespace Lib
 			Initialize(control.Handle, control.Width, control.Height);
 
 			// リサイズコールバック
-			control.Resize += (o, e) => {
-				ResizeTargetPanel(control.Width, control.Height);
-			};
+			//control.Resize += (o, e) => {
+			//	ResizeTargetPanel(control.Width, control.Height);
+			//};
 		}
 
 		/// <summary>

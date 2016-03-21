@@ -151,15 +151,15 @@ namespace Lib
 		/// <summary>
 		/// コンスタントバッファ設定
 		/// </summary>
-		public void SetVsConstantBuffer(SlimDX.Direct3D11.Buffer[] cb, int slot, int count)
+		public void SetVsConstantBuffer(D3D11Buffer[] cb, int slot, int count)
 		{
 			context_.VertexShader.SetConstantBuffers(cb, slot, count);
 		}
-		public void SetPsConstantBuffer(SlimDX.Direct3D11.Buffer[] cb, int slot, int count)
+		public void SetPsConstantBuffer(D3D11Buffer[] cb, int slot, int count)
 		{
 			context_.PixelShader.SetConstantBuffers(cb, slot, count);
 		}
-		public void SetCsConstantBuffer(SlimDX.Direct3D11.Buffer[] cb, int slot, int count)
+		public void SetCsConstantBuffer(D3D11Buffer[] cb, int slot, int count)
 		{
 			context_.ComputeShader.SetConstantBuffers(cb, slot, count);
 		}
