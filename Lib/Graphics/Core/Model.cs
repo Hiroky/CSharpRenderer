@@ -118,7 +118,7 @@ namespace Lib
 					materials_[s.materialIndex].Setup();
 					ShaderManager.SetUniformParams(ref worldMatrix_);
 
-					Renderer.D3dCurrentContext.DrawIndexed(s.endIndex - s.startIndex, s.startIndex, 0);
+					GraphicsCore.D3dImmediateContext.DrawIndexed(s.endIndex - s.startIndex, s.startIndex, 0);
 				}
 			}
 		}
@@ -138,7 +138,7 @@ namespace Lib
 						materials_[s.materialIndex].Setup();
 						ShaderManager.SetUniformParams(ref worldMatrix_);
 
-						Renderer.D3dCurrentContext.DrawIndexed(s.endIndex - s.startIndex, s.startIndex, 0);
+						GraphicsCore.D3dImmediateContext.DrawIndexed(s.endIndex - s.startIndex, s.startIndex, 0);
 					}
 				}
 			}

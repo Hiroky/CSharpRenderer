@@ -12,14 +12,14 @@ namespace Lib
 	/// <summary>
 	/// レンダリングコンテキスト
 	/// </summary>
-	public class RenderContext
+	public class GraphicsContext
 	{
 		private DeviceContext context_;
 
 		/// <summary>
 		/// コンストラクタ
 		/// </summary>
-		public RenderContext(DeviceContext context)
+		public GraphicsContext(DeviceContext context)
 		{
 			context_ = context;
 		}
@@ -32,12 +32,30 @@ namespace Lib
 			var rtvs = new RenderTargetView[colorBuffers.Count];
 			int i = 0;
 			foreach(var c in colorBuffers) {
-				rtvs[i] = c.RenderTargetView;
+				if (c != null) {
+					rtvs[i] = c.RenderTargetView;
+				}
 				i++;
 			}
 
 			var dsv = depthStencilBuffer != null ? depthStencilBuffer.DepthStencilView : null;
 			context_.OutputMerger.SetTargets(dsv, rtvs);
+		}
+
+		/// <summary>
+		/// レンダーターゲットクリア
+		/// </summary>
+		public void ClearRenderTarget(Texture buffer, Color4 color)
+		{
+			context_.ClearRenderTargetView(buffer.RenderTargetView, color);
+		}
+
+		/// <summary>
+		/// デプスバッファクリア
+		/// </summary>
+		public void ClearDepthStencil(Texture buffer, float value)
+		{
+			context_.ClearDepthStencilView(buffer.DepthStencilView, DepthStencilClearFlags.Depth, value, 0);
 		}
 
 		/// <summary>
@@ -159,6 +177,23 @@ namespace Lib
 		public void SetPrimitiveTopology(PrimitiveTopology state)
 		{
 			context_.InputAssembler.PrimitiveTopology = state;
+		}
+
+
+		public void BeginQuery(Query query)
+		{
+			context_.Begin(query);
+		}
+
+		public void EndQuery(Query query)
+		{
+			context_.End(query);
+		}
+
+		public Type GetQueryData<Type>(Query query)
+			where Type : struct
+		{
+			return context_.GetData<Type>(query);
 		}
 	}
 }

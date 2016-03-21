@@ -47,7 +47,12 @@
 			</Menu>
 			<!--<StatusBar Height="24" Margin="0" VerticalAlignment="Bottom" DockPanel.Dock="Bottom" Background="#FF2D2D30" BorderBrush="#FF3C3B3B" BorderThickness="0"/>-->
 
-			<Image Name="RenderImage" Grid.Column="0" Stretch="Fill"/>
+			<!--<Image Name="RenderImage" Grid.Column="0" Stretch="Fill"/>-->
+			<WindowsFormsHost Name="formsHost">
+				<WindowsFormsHost.Child>
+					<winform:Control x:Name="renderCtrl"></winform:Control>
+				</WindowsFormsHost.Child>
+			</WindowsFormsHost>
 
 			<!--<Grid DockPanel.Dock="Bottom">
 				<Grid.ColumnDefinitions>

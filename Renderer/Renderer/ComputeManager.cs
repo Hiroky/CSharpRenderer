@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using System.Runtime.InteropServices;
 
 using Lib;
-using ksRenderer = Lib.Renderer;
+using ksRenderer = Lib.GraphicsCore;
 using SlimDX;
 using SlimDX.D3DCompiler;
 

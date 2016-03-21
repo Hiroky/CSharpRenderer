@@ -63,14 +63,14 @@ namespace Lib
 
 		public VertexBuffer(BufferDesc desc)
 		{
-			buffer_ = new D3D11Buffer(Renderer.D3dDevice, desc.data, desc.data_size, ResourceUsage.Default, BindFlags.VertexBuffer, CpuAccessFlags.None, ResourceOptionFlags.None, 0);
+			buffer_ = new D3D11Buffer(GraphicsCore.D3dDevice, desc.data, desc.data_size, ResourceUsage.Default, BindFlags.VertexBuffer, CpuAccessFlags.None, ResourceOptionFlags.None, 0);
 			stride_ = desc.stride;
 		}
 
 		public void Bind()
 		{
-			Renderer.SetPrimitiveTopology(Topology);
-			Renderer.D3dCurrentContext.InputAssembler.SetVertexBuffers(0, new VertexBufferBinding((D3D11Buffer)buffer_, stride_, 0));
+			GraphicsCore.SetPrimitiveTopology(Topology);
+			GraphicsCore.D3dImmediateContext.InputAssembler.SetVertexBuffers(0, new VertexBufferBinding((D3D11Buffer)buffer_, stride_, 0));
 		}
 	}
 
@@ -82,12 +82,12 @@ namespace Lib
 	{
 		public IndexBuffer(DataStream stream, int data_size)
 		{
-			buffer_ = new D3D11Buffer(Renderer.D3dDevice, stream, data_size, ResourceUsage.Default, BindFlags.IndexBuffer, CpuAccessFlags.None, ResourceOptionFlags.None, 0);
+			buffer_ = new D3D11Buffer(GraphicsCore.D3dDevice, stream, data_size, ResourceUsage.Default, BindFlags.IndexBuffer, CpuAccessFlags.None, ResourceOptionFlags.None, 0);
 		}
 
 		public void Bind()
 		{
-			Renderer.D3dCurrentContext.InputAssembler.SetIndexBuffer((D3D11Buffer)buffer_, Format.R32_UInt, 0);
+			GraphicsCore.D3dImmediateContext.InputAssembler.SetIndexBuffer((D3D11Buffer)buffer_, Format.R32_UInt, 0);
 		}
 	}
 
@@ -185,7 +185,7 @@ namespace Lib
 			Marshal.Copy(ptr, buffer, 0, header.data_size);
 
 			// バッファから初期化
-			shaderResourceView_ = ShaderResourceView.FromMemory(Renderer.D3dDevice, buffer);
+			shaderResourceView_ = ShaderResourceView.FromMemory(GraphicsCore.D3dDevice, buffer);
 			buffer_ = shaderResourceView_.Resource;
 
 			// 情報取得
@@ -219,7 +219,7 @@ namespace Lib
 
 					// ストリームの一をセットしてSRV生成
 					s.Position = offset;
-					shaderResourceView_ = ShaderResourceView.FromStream(Renderer.D3dDevice, s, header.data_size);
+					shaderResourceView_ = ShaderResourceView.FromStream(GraphicsCore.D3dDevice, s, header.data_size);
 					handle.Free();
 				} else if( ext == ".tga" ) {
 					// tga
@@ -273,7 +273,7 @@ namespace Lib
 					handle.Free();
 				} else {
 					// その他フォーマット
-					shaderResourceView_ = ShaderResourceView.FromStream(Renderer.D3dDevice, s, (int)stream.Length);
+					shaderResourceView_ = ShaderResourceView.FromStream(GraphicsCore.D3dDevice, s, (int)stream.Length);
 				}
 
 				// 情報取得
@@ -316,7 +316,7 @@ namespace Lib
 		/// <param name="desc"></param>
 		public void Initialize(BufferDesc desc)
 		{
-			var device = Renderer.D3dDevice;
+			var device = GraphicsCore.D3dDevice;
 
 			// 情報取得
 			width_ = desc.width;
@@ -459,7 +459,7 @@ namespace Lib
 		/// <param name="desc"></param>
 		public void Initialize3D(BufferDesc desc)
 		{
-			var device = Renderer.D3dDevice;
+			var device = GraphicsCore.D3dDevice;
 
 			// 情報取得
 			width_ = desc.width;
@@ -562,14 +562,14 @@ namespace Lib
 		/// <returns></returns>
 		public void SetBufferData(int slot, int level, byte[] data)
 		{
-			DataBox box = Renderer.D3dImmediateContext.MapSubresource(buffer_ as Texture2D, level, slot, MapMode.Write, SlimDX.Direct3D11.MapFlags.None);
+			DataBox box = GraphicsCore.D3dImmediateContext.MapSubresource(buffer_ as Texture2D, level, slot, MapMode.Write, SlimDX.Direct3D11.MapFlags.None);
 			if (box.Data.Length != data.Length) {
-				Renderer.D3dImmediateContext.UnmapSubresource(buffer_ as Texture2D, slot);
+				GraphicsCore.D3dImmediateContext.UnmapSubresource(buffer_ as Texture2D, slot);
 				new Exception();
 				return;
 			}
 			box.Data.Write(data, 0, (int)box.Data.Length);
-			Renderer.D3dImmediateContext.UnmapSubresource(buffer_ as Texture2D, slot);
+			GraphicsCore.D3dImmediateContext.UnmapSubresource(buffer_ as Texture2D, slot);
 		}
 
 
@@ -578,7 +578,7 @@ namespace Lib
 		/// </summary>
 		public byte[] GetBufferData(int slot = 0)
 		{
-			var device = Renderer.D3dDevice;
+			var device = GraphicsCore.D3dDevice;
 
 			// テンポラリリソース生成
 			Texture2DDescription desc = new Texture2DDescription {
@@ -594,13 +594,13 @@ namespace Lib
 			Texture2D texture = new Texture2D(device, desc);
 
 			// コピー(SlimDXでは何事もなく失敗することがあるのでうまくいかないときはここを疑う)
-			Renderer.D3dImmediateContext.CopyResource(buffer_, texture);
+			GraphicsCore.D3dImmediateContext.CopyResource(buffer_, texture);
 
 			// マップしてデータ取得
-			DataBox box = Renderer.D3dImmediateContext.MapSubresource(texture, 0, slot, MapMode.Read, SlimDX.Direct3D11.MapFlags.None);
+			DataBox box = GraphicsCore.D3dImmediateContext.MapSubresource(texture, 0, slot, MapMode.Read, SlimDX.Direct3D11.MapFlags.None);
 			byte[] ary = new byte[box.Data.Length];
 			box.Data.Read(ary, 0, (int)box.Data.Length);
-			Renderer.D3dImmediateContext.UnmapSubresource(texture, slot);
+			GraphicsCore.D3dImmediateContext.UnmapSubresource(texture, slot);
 			texture.Dispose();
 
 			return ary;
@@ -662,7 +662,7 @@ namespace Lib
 		/// <param name="desc"></param>
 		public void Initialize(BufferDesc desc)
 		{
-			var device = Renderer.D3dDevice;
+			var device = GraphicsCore.D3dDevice;
 			stride_ = desc.stride;
 
 			BindFlags flags = BindFlags.ShaderResource;
@@ -708,7 +708,7 @@ namespace Lib
 
 		public void SetBufferData(DataStream stream)
 		{
-			var context = Renderer.D3dCurrentContext;
+			var context = GraphicsCore.D3dImmediateContext;
 			DataBox box = new DataBox(0, 0, stream);
 			context.UpdateSubresource(box, buffer_, 0);
 			stream.Close();
@@ -717,7 +717,7 @@ namespace Lib
 
 		public void SetBufferData(byte[] data)
 		{
-			var context = Renderer.D3dCurrentContext;
+			var context = GraphicsCore.D3dImmediateContext;
 			DataStream stream = new DataStream(data, true, false);
 			DataBox box = new DataBox(0, 0, stream);
 			context.UpdateSubresource(box, buffer_, 0);
@@ -727,7 +727,7 @@ namespace Lib
 
 		public void SetBufferData(IntPtr data, int size)
 		{
-			var context = Renderer.D3dCurrentContext;
+			var context = GraphicsCore.D3dImmediateContext;
 			DataStream stream =  new DataStream(data, size, true, false);
 			DataBox box = new DataBox(0, 0, stream);
 			context.UpdateSubresource(box, buffer_, 0);

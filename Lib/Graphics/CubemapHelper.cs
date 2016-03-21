@@ -14,22 +14,22 @@ namespace Lib
 		/// <summary>
 		/// キューブマップにレンダリング
 		/// </summary>
-		public static void RenderingCubeMap(Texture cubemap, Texture depth, Vector3 position, Action sceneDrawFunc)
+		public static void RenderingCubeMap(GraphicsContext context, Texture cubemap, Texture depth, Vector3 position, Action sceneDrawFunc)
 		{
-			Renderer.FrameBuffer frameBuffer = new Renderer.FrameBuffer() {
+			GraphicsCore.FrameBuffer frameBuffer = new GraphicsCore.FrameBuffer() {
 				color_buffer_ = new Texture[1] { cubemap },
 				depth_stencil_ = depth,
 				is_array_buffer_ = true,
 			};
 
-			Camera backupCamera = Renderer.CurrentDrawCamera;
+			Camera backupCamera = GraphicsCore.CurrentDrawCamera;
 			Camera camera = new Camera();
 			// 右手対応のためx反転している
 			Matrix projection = Matrix.PerspectiveFovRH((float)System.Math.PI / 2.0f, 1.0f, 0.1f, 1000.0f) * Matrix.Scaling(-1, 1, 1);
 			Matrix view = Matrix.LookAtRH(position, Vector3.Zero, Vector3.UnitZ);
 			camera.InitializeExternal(view, projection);
-			Renderer.CurrentDrawCamera = camera;
-			Renderer.SetRasterizerState(RenderState.RasterizerState.CullFront);
+			GraphicsCore.CurrentDrawCamera = camera;
+			GraphicsCore.SetRasterizerState(RenderState.RasterizerState.CullFront);
 
 			// 各面をレンダリング
 			for (int i = 0; i < 6; ++i) {
@@ -67,12 +67,13 @@ namespace Lib
 				camera.SetViewMatrix(ref view);
 				camera.Update();
 
-				Renderer.BeginRender(frameBuffer);
-				sceneDrawFunc();
-				Renderer.EndRender();
+				// TODO:要対応
+				//GraphicsCore.BeginRender(frameBuffer);
+				//sceneDrawFunc();
+				//GraphicsCore.EndRender();
 			}
-			Renderer.CurrentDrawCamera = backupCamera;
-			Renderer.SetRasterizerState(RenderState.RasterizerState.CullBack);
+			GraphicsCore.CurrentDrawCamera = backupCamera;
+			GraphicsCore.SetRasterizerState(RenderState.RasterizerState.CullBack);
 		}
 
 
@@ -107,7 +108,7 @@ namespace Lib
 				mips = miplevel,
 				format = SlimDX.DXGI.Format.R16G16B16A16_Float,
 			});
-			Renderer.FrameBuffer frameBuffer = new Renderer.FrameBuffer();
+			GraphicsCore.FrameBuffer frameBuffer = new GraphicsCore.FrameBuffer();
 			frameBuffer.color_buffer_ = new Texture[1] { output };
 			frameBuffer.is_array_buffer_ = true;
 
@@ -123,9 +124,10 @@ namespace Lib
 						return true;
 					});
 					frameBuffer.array_buffer_index_ = m * 6 + i;
-					Renderer.BeginRender(frameBuffer);
-					prim.Draw();
-					Renderer.EndRender();
+					// TODO:
+					//GraphicsCore.BeginRender(frameBuffer);
+					//prim.Draw();
+					//GraphicsCore.EndRender();
 				}
 			}
 
@@ -136,10 +138,7 @@ namespace Lib
 		/// <summary>
 		/// BRDFで使用するLUTを生成する(UE4方式)
 		/// </summary>
-		/// <param name="w"></param>
-		/// <param name="h"></param>
-		/// <returns></returns>
-		public static Texture CreateBRDFLookUpTable(int w, int h)
+		public static Texture CreateBRDFLookUpTable(GraphicsContext context, int w, int h)
 		{
 			var tex = new Texture(new Texture.InitDesc {
 				bindFlag = TextureBuffer.BindFlag.IsRenderTarget,
@@ -152,13 +151,11 @@ namespace Lib
 			prim.AddRect(ref rect);
 			prim.GetMaterial().DepthState = RenderState.DepthState.None;
 
-			Renderer.FrameBuffer frameBuffer = new Renderer.FrameBuffer();
+			GraphicsCore.FrameBuffer frameBuffer = new GraphicsCore.FrameBuffer();
 			frameBuffer.color_buffer_ = new Texture[1] { tex };
 
-			Renderer.BeginRender(frameBuffer);
+			context.SetRenderTargets(frameBuffer.color_buffer_, null);
 			prim.Draw();
-			Renderer.EndRender();
-
 			prim.Dispose();
 			return tex;
 		}

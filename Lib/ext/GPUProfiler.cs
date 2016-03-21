@@ -90,18 +90,18 @@ namespace Lib.Ext
 			}
 		}
 
-		public static void BeginProfilePoint(DeviceContext context, String profilePointName)
+		public static void BeginProfilePoint(GraphicsContext context, String profilePointName)
 		{
-			context.End(m_HWQueries[m_CurrentQuery]);
+			context.EndQuery(m_HWQueries[m_CurrentQuery]);
 			m_HWQueriesDescs[m_CurrentQuery] = profilePointName;
 			m_QueriesStack.Push(m_CurrentQuery);
 
 			IncrementCurrentQuery();
 		}
 
-		public static void EndProfilePoint(DeviceContext context)
+		public static void EndProfilePoint(GraphicsContext context)
 		{
-			context.End(m_HWQueries[m_CurrentQuery]);
+			context.EndQuery(m_HWQueries[m_CurrentQuery]);
 			int beginQuery = m_QueriesStack.Pop();
 			m_CorrespondingQueryEnds[beginQuery] = m_CurrentQuery;
 			IncrementCurrentQuery();
@@ -120,14 +120,14 @@ namespace Lib.Ext
 			m_CurrentDisjointQuery %= MAX_HW_DISJOINT_QUERIES;
 		}
 
-		public static void BeginFrameProfiling(DeviceContext context)
+		public static void BeginFrameProfiling(GraphicsContext context)
 		{
-			context.Begin(m_DisjointQueries[m_CurrentDisjointQuery]);
+			context.BeginQuery(m_DisjointQueries[m_CurrentDisjointQuery]);
 			m_CurrentFrameFirstQuery = m_CurrentQuery;
 			BeginProfilePoint(context, "WholeFrame");
 		}
 
-		public static void EndFrameProfiling(DeviceContext context)
+		public static void EndFrameProfiling(GraphicsContext context)
 		{
 			PendingFrameQueries pendingFrame = new PendingFrameQueries();
 
@@ -141,7 +141,7 @@ namespace Lib.Ext
 				throw new Exception("Wrong profile point count! Did you forget about EndProfilePoint?");
 			}
 
-			context.End(m_DisjointQueries[m_CurrentDisjointQuery]);
+			context.EndQuery(m_DisjointQueries[m_CurrentDisjointQuery]);
 
 			m_PendingFrames.Enqueue(pendingFrame);
 
@@ -150,7 +150,7 @@ namespace Lib.Ext
 			// Time to fetch prev frames!
 			if (m_PendingFrames.Count > 4) {
 				pendingFrame = m_PendingFrames.Dequeue();
-				TimestampQueryData disjointData = context.GetData<TimestampQueryData>(m_DisjointQueries[pendingFrame.m_DisjointQueryId]);
+				TimestampQueryData disjointData = context.GetQueryData<TimestampQueryData>(m_DisjointQueries[pendingFrame.m_DisjointQueryId]);
 				ProfilerTreeMember parent = new ProfilerTreeMember();
 				ProfilerTreeMember frameParent = parent;
 
@@ -158,8 +158,8 @@ namespace Lib.Ext
 					if (m_CorrespondingQueryEnds[queryIterator] != Int32.MaxValue) {
 						var profilerObject = new ProfilerTreeMember();
 						int correspondingEnd = m_CorrespondingQueryEnds[queryIterator];
-						long beginProfilePointData = context.GetData<long>(m_HWQueries[queryIterator]);
-						long endProfilePointData = context.GetData<long>(m_HWQueries[correspondingEnd]);
+						long beginProfilePointData = context.GetQueryData<long>(m_HWQueries[queryIterator]);
+						long endProfilePointData = context.GetQueryData<long>(m_HWQueries[correspondingEnd]);
 
 						profilerObject.m_Time = (double)(endProfilePointData - beginProfilePointData) / (double)disjointData.Frequency * 1000.0;
 						profilerObject.m_Name = m_HWQueriesDescs[queryIterator];
@@ -185,9 +185,9 @@ namespace Lib.Ext
 
 	public class GpuProfilePoint : IDisposable
 	{
-		DeviceContext context;
+		GraphicsContext context;
 
-		public GpuProfilePoint(DeviceContext context, String name)
+		public GpuProfilePoint(GraphicsContext context, String name)
 		{
 			this.context = context;
 			GPUProfiler.BeginProfilePoint(context, name);

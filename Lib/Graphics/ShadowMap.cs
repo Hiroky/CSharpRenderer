@@ -19,8 +19,8 @@ namespace Lib
 		Type type_;
 		Texture shadowMap_;
 		Texture[] blurMap_;
-		Renderer.FrameBuffer frameBuffer_;
-		Renderer.FrameBuffer blurFrameBuffer_;
+		GraphicsCore.FrameBuffer frameBuffer_;
+		GraphicsCore.FrameBuffer blurFrameBuffer_;
 		Prim blurPrim_;
 		Camera camera_;
 		Func<Shader, Shader> shadowMapDrawShaderFunc_;
@@ -60,11 +60,11 @@ namespace Lib
 				blurMap_[i] = new Texture(desc);
 			}
 
-			frameBuffer_ = new Renderer.FrameBuffer() {
+			frameBuffer_ = new GraphicsCore.FrameBuffer() {
 				color_buffer_ = new Texture[0],
 				depth_stencil_ = shadowMap_,
 			};
-			blurFrameBuffer_ = new Renderer.FrameBuffer() {
+			blurFrameBuffer_ = new GraphicsCore.FrameBuffer() {
 				color_buffer_ = new Texture[1],
 				depth_stencil_ = null,
 			};
@@ -100,10 +100,12 @@ namespace Lib
 		/// <summary>
 		/// 
 		/// </summary>
-		public void BeginRender()
+		public void BeginRender(GraphicsContext context)
 		{
-			Renderer.CurrentDrawCamera = camera_;
-			Renderer.BeginRender(frameBuffer_);
+			GraphicsCore.CurrentDrawCamera = camera_;
+			context.SetRenderTargets(frameBuffer_.color_buffer_, frameBuffer_.depth_stencil_);
+			context.SetViewport(new SlimDX.Direct3D11.Viewport(0, 0, frameBuffer_.depth_stencil_.Width, frameBuffer_.depth_stencil_.Height));
+			context.ClearDepthStencil(frameBuffer_.depth_stencil_, 1.0f);
 			ShaderManager.UserShaderBindHandler += shadowMapDrawShaderFunc_;
 		}
 
@@ -111,32 +113,29 @@ namespace Lib
 		/// <summary>
 		/// 
 		/// </summary>
-		public void EndRender()
+		public void EndRender(GraphicsContext context)
 		{
 			ShaderManager.UserShaderBindHandler -= shadowMapDrawShaderFunc_;
-			Renderer.EndRender();
 
 			// Generate SM
 			blurFrameBuffer_.color_buffer_[0] = blurMap_[0];
-			Renderer.BeginRender(blurFrameBuffer_);
+			context.SetRenderTargets(blurFrameBuffer_.color_buffer_, blurFrameBuffer_.depth_stencil_);
+			context.SetViewport(new SlimDX.Direct3D11.Viewport(0, 0, blurFrameBuffer_.color_buffer_[0].Width, blurFrameBuffer_.color_buffer_[0].Height));
 			blurPrim_.GetMaterial().SetShader(shaderName_[(int)type_]);
 			blurPrim_.GetMaterial().SetShaderViewPS(0, shadowMap_);
 			blurPrim_.Draw();
-			Renderer.EndRender();
 
 			blurFrameBuffer_.color_buffer_[0] = blurMap_[1];
-			Renderer.BeginRender(blurFrameBuffer_);
+			context.SetRenderTargets(blurFrameBuffer_.color_buffer_, blurFrameBuffer_.depth_stencil_);
 			blurPrim_.GetMaterial().SetShader("GaussianBlurV");
 			blurPrim_.GetMaterial().SetShaderViewPS(0, blurMap_[0]);
 			blurPrim_.Draw();
-			Renderer.EndRender();
 
 			blurFrameBuffer_.color_buffer_[0] = blurMap_[0];
-			Renderer.BeginRender(blurFrameBuffer_);
+			context.SetRenderTargets(blurFrameBuffer_.color_buffer_, blurFrameBuffer_.depth_stencil_);
 			blurPrim_.GetMaterial().SetShader("GaussianBlurH");
 			blurPrim_.GetMaterial().SetShaderViewPS(0, blurMap_[1]);
 			blurPrim_.Draw();
-			Renderer.EndRender();
 		}
 	}
 }

@@ -8,8 +8,7 @@ using Lib;
 using SlimDX;
 using SlimDX.Direct3D11;
 using DXMatrix = SlimDX.Matrix;
-using ksRenderer = Lib.Renderer;
-using ksGpuProfilePoint = Lib.Ext.GpuProfilePoint;
+using MyGpuProfilePoint = Lib.Ext.GpuProfilePoint;
 
 
 namespace Renderer
@@ -39,9 +38,9 @@ namespace Renderer
 		Texture uav_;
 		Texture.InitDesc hdrResolveDesc_;
 		Texture hdrResolveBuffer_;
-		ksRenderer.FrameBuffer deferredBuffer_;
-		ksRenderer.FrameBuffer forwardBuffer_;
-		ksRenderer.FrameBuffer hdrResultBuffer_;
+		GraphicsCore.FrameBuffer deferredBuffer_;
+		GraphicsCore.FrameBuffer forwardBuffer_;
+		GraphicsCore.FrameBuffer hdrResultBuffer_;
 
 		ReflectionCapture globalCapture_;
 		List<ReflectionCapture> localCapture_;
@@ -81,8 +80,8 @@ namespace Renderer
 			shadowMap_.Camera.Update();
 
 			// カメラ操作
-			ksRenderer.Camera3D.SetAt(ref camera_at_);
-			cameraCtrl_ = new CameraController(ksRenderer.Camera3D);
+			GraphicsCore.Camera3D.SetAt(ref camera_at_);
+			cameraCtrl_ = new CameraController(GraphicsCore.Camera3D);
 
 			// キューブマップ撮影
 			cubeMapRendered_ = false;
@@ -109,20 +108,20 @@ namespace Renderer
 			gbufferDesc_ = new Texture.InitDesc[] {
 				new Texture.InitDesc() {
 					bindFlag = TextureBuffer.BindFlag.IsRenderTarget,
-					width = ksRenderer.TargetWidth,
-					height = ksRenderer.TargetHeight,
+					width = GraphicsCore.TargetWidth,
+					height = GraphicsCore.TargetHeight,
 					format = SlimDX.DXGI.Format.R16G16B16A16_Float,
 				},
 				new Texture.InitDesc() {
 					bindFlag = TextureBuffer.BindFlag.IsRenderTarget,
-					width = ksRenderer.TargetWidth,
-					height = ksRenderer.TargetHeight,
+					width = GraphicsCore.TargetWidth,
+					height = GraphicsCore.TargetHeight,
 					format = SlimDX.DXGI.Format.R8G8B8A8_UNorm,
 				},
 				new Texture.InitDesc() {
 					bindFlag = TextureBuffer.BindFlag.IsRenderTarget,
-					width = ksRenderer.TargetWidth,
-					height = ksRenderer.TargetHeight,
+					width = GraphicsCore.TargetWidth,
+					height = GraphicsCore.TargetHeight,
 					format = SlimDX.DXGI.Format.R8G8B8A8_UNorm,
 				},
 			};
@@ -130,34 +129,34 @@ namespace Renderer
 			for (int i = 0; i < gbuffers_.Length; i++) {
 				gbuffers_[i] = new Texture(gbufferDesc_[i]);
 			}
-			deferredBuffer_ = new ksRenderer.FrameBuffer();
+			deferredBuffer_ = new GraphicsCore.FrameBuffer();
 			deferredBuffer_.color_buffer_ = gbuffers_;
-			deferredBuffer_.depth_stencil_ = ksRenderer.DefaultDepthBuffer;
+			deferredBuffer_.depth_stencil_ = GraphicsCore.DefaultDepthBuffer;
 
 			uavDesc_ = new Texture.InitDesc {
 				bindFlag = TextureBuffer.BindFlag.IsRenderTarget | TextureBuffer.BindFlag.IsUnorderedAccess,
-				width = ksRenderer.TargetWidth,
-				height = ksRenderer.TargetHeight,
+				width = GraphicsCore.TargetWidth,
+				height = GraphicsCore.TargetHeight,
 				format = SlimDX.DXGI.Format.R16G16B16A16_Float,
 			};
 			uav_ = new Texture(uavDesc_);
 			csMgr_.SetUAVs(new Texture[] { uav_ });
-			var bufs = new IShaderView[] { gbuffers_[0], gbuffers_[1], gbuffers_[2], ksRenderer.DefaultDepthBuffer, lightMgr_.LightBuffer, shadowMap_.Map };
+			var bufs = new IShaderView[] { gbuffers_[0], gbuffers_[1], gbuffers_[2], GraphicsCore.DefaultDepthBuffer, lightMgr_.LightBuffer, shadowMap_.Map };
 			csMgr_.SetResources(bufs);
 
 			hdrResolveDesc_ = new Texture.InitDesc() {
 				bindFlag = TextureBuffer.BindFlag.IsRenderTarget,
-				width = ksRenderer.TargetWidth,
-				height = ksRenderer.TargetHeight,
+				width = GraphicsCore.TargetWidth,
+				height = GraphicsCore.TargetHeight,
 				format = SlimDX.DXGI.Format.R8G8B8A8_UNorm,
 			};
 			hdrResolveBuffer_ = new Texture(hdrResolveDesc_);
 
-			forwardBuffer_ = new ksRenderer.FrameBuffer();
+			forwardBuffer_ = new GraphicsCore.FrameBuffer();
 			forwardBuffer_.color_buffer_ = new Texture[] { uav_ };
-			forwardBuffer_.depth_stencil_ = ksRenderer.DefaultDepthBuffer;
+			forwardBuffer_.depth_stencil_ = GraphicsCore.DefaultDepthBuffer;
 
-			hdrResultBuffer_ = new ksRenderer.FrameBuffer();
+			hdrResultBuffer_ = new GraphicsCore.FrameBuffer();
 			hdrResultBuffer_.color_buffer_ = new Texture[] { hdrResolveBuffer_ };
 			hdrResultBuffer_.depth_stencil_ = null;
 
@@ -278,7 +277,7 @@ namespace Renderer
 		public void ScreenSizeChanged(int w, int h)
 		{
 			csMgr_.ScreenSizeChanged(w, h);
-			var bufs = new IShaderView[] { gbuffers_[0], gbuffers_[1], gbuffers_[2], ksRenderer.DefaultDepthBuffer, lightMgr_.LightBuffer, shadowMap_.Map };
+			var bufs = new IShaderView[] { gbuffers_[0], gbuffers_[1], gbuffers_[2], GraphicsCore.DefaultDepthBuffer, lightMgr_.LightBuffer, shadowMap_.Map };
 			csMgr_.SetResources(bufs);
 
 			// GBuffer
@@ -288,8 +287,8 @@ namespace Renderer
 				gbuffers_[i].Dispose();
 				gbuffers_[i].Initialize(gbufferDesc_[i]);
 			}
-			deferredBuffer_.depth_stencil_ = ksRenderer.DefaultDepthBuffer;
-			forwardBuffer_.depth_stencil_ = ksRenderer.DefaultDepthBuffer;
+			deferredBuffer_.depth_stencil_ = GraphicsCore.DefaultDepthBuffer;
+			forwardBuffer_.depth_stencil_ = GraphicsCore.DefaultDepthBuffer;
 			uav_.Dispose();
 			uavDesc_.width = w;
 			uavDesc_.height = h;
@@ -324,7 +323,7 @@ namespace Renderer
 		public void UpdateDraw()
 		{
 			// レンダラ更新
-			ksRenderer.Update();
+			GraphicsCore.Update();
 
 			// ライト更新
 			lightMgr_.Update();
@@ -343,18 +342,18 @@ namespace Renderer
 		/// </summary>
 		public void Draw()
 		{
+			var context = GraphicsCore.ImmediateContext;
+
 			UpdateDraw();
 
-			ksRenderer.BeginDraw();
 			{
 				// シャドウマップ
-				using (new ksGpuProfilePoint(ksRenderer.D3dCurrentContext, "Create ShadowMap")) {
-					shadowMap_.BeginRender();
+				using (new MyGpuProfilePoint(context, "Create ShadowMap")) {
+					shadowMap_.BeginRender(context);
 					{
-						ksRenderer.ClearDepthBuffer();
 						SceneDraw();
 					}
-					shadowMap_.EndRender();
+					shadowMap_.EndRender(context);
 				}
 
 				// キューブマップ
@@ -364,17 +363,16 @@ namespace Renderer
 				}
 
 				// ディファードパス
-				using (new ksGpuProfilePoint(ksRenderer.D3dCurrentContext, "Deferred Path")) {
+				using (new MyGpuProfilePoint(context, "Deferred Path")) {
 					// GBuffer
-					using (new ksGpuProfilePoint(ksRenderer.D3dCurrentContext, "Render GBuffer")) {
-						ksRenderer.CurrentDrawCamera = ksRenderer.Camera3D;
-						//ksRenderer.BeginRender();
+					using (new MyGpuProfilePoint(context, "Render GBuffer")) {
+						GraphicsCore.CurrentDrawCamera = GraphicsCore.Camera3D;
 						RenderGBuffer();
-						//ksRenderer.EndRender();
 					}
+					context.SetRenderTargets(new Texture[4], null);	// unbind
 
 					// ライティングCS
-					using (new ksGpuProfilePoint(ksRenderer.D3dCurrentContext, "Lighting")) {
+					using (new MyGpuProfilePoint(context, "Lighting")) {
 						csMgr_.Bind();
 						int x = Lib.ComputeShader.CalcThreadGroups(gbuffers_[0].Width, 32);
 						int y = Lib.ComputeShader.CalcThreadGroups(gbuffers_[0].Height, 32);
@@ -384,8 +382,8 @@ namespace Renderer
 				}
 
 				// フォワードパス
-				using (new ksGpuProfilePoint(ksRenderer.D3dCurrentContext, "Forward Path")) {
-					ksRenderer.BeginRender(forwardBuffer_);
+				using (new MyGpuProfilePoint(context, "Forward Path")) {
+					context.SetRenderTargets(forwardBuffer_.color_buffer_, forwardBuffer_.depth_stencil_);
 					{
 						// キューブマップデバッグ
 						if (cubeMapRenderEnable_) {
@@ -403,39 +401,36 @@ namespace Renderer
 						//	lightMgr_.DebugDraw();
 						//}
 					}
-					ksRenderer.EndRender();
 				}
 
 				// トーンマップ
-				using (new ksGpuProfilePoint(ksRenderer.D3dCurrentContext, "HDR Resolve")) {
+				using (new MyGpuProfilePoint(context, "HDR Resolve")) {
 					if (viewModel_.IsEnableToneMap) {
-						toneMap_.CalcLuminance(uav_);
-						ksRenderer.BeginRender(hdrResultBuffer_);
-						toneMap_.KeyValue= viewModel_.ToneMapKeyValue;
+						toneMap_.CalcLuminance(context, uav_);
+						context.SetRenderTargets(hdrResultBuffer_.color_buffer_, null);
+						toneMap_.KeyValue = viewModel_.ToneMapKeyValue;
 						toneMap_.ResolveHDR(uav_);
-						ksRenderer.EndRender();
 					} else {
-						ksRenderer.BeginRender(hdrResultBuffer_);
+						context.SetRenderTargets(hdrResultBuffer_.color_buffer_, null);
 						toneMap_.ResolveGamma(uav_);
-						ksRenderer.EndRender();
 					}
 				}
 
 				// 最終レンダリング
-				ksRenderer.BeginRender();
+				GraphicsCore.BeginRender();
 				{
+					context.ClearDepthStencil(GraphicsCore.DefaultDepthBuffer, 1.0f);
+
 					// ライティング結果
 					if (ViewModel.IsEnableFXAA && ViewModel.ViewIndex == (int)ViewItems.Type.Result) {
-						using (new ksGpuProfilePoint(ksRenderer.D3dCurrentContext, "FXAA")) {
+						using (new MyGpuProfilePoint(context, "FXAA")) {
 							fxaaPrim_.Draw();
 						}
 					} else {
 						prim_.Draw();
 					}
 				}
-				ksRenderer.EndRender();
 			}
-			ksRenderer.EndDraw();
 		}
 
 
@@ -455,14 +450,16 @@ namespace Renderer
 		/// </summary>
 		void RenderGBuffer()
 		{
-			ksRenderer.BeginRender(deferredBuffer_);
+			var context = GraphicsCore.ImmediateContext;
 
-			ksRenderer.ClearColorBuffer(new Color4(0.0f, 0.0f, 0.0f));
-			ksRenderer.ClearDepthBuffer();
+			context.SetRenderTargets(deferredBuffer_.color_buffer_, deferredBuffer_.depth_stencil_);
+			foreach(var t in deferredBuffer_.color_buffer_) {
+				context.ClearRenderTarget(t, new Color4(0.0f, 0.0f, 0.0f));
+			}
+			context.ClearDepthStencil(deferredBuffer_.depth_stencil_, 1.0f);
+			context.SetViewport(new Viewport(0, 0, deferredBuffer_.color_buffer_[0].Width, deferredBuffer_.color_buffer_[0].Height));
 
 			SceneDraw();
-
-			ksRenderer.EndRender();
 		}
 
 
@@ -471,6 +468,8 @@ namespace Renderer
 		/// </summary>
 		void RenderCubeMap()
 		{
+			var context = GraphicsCore.ImmediateContext;
+
 			// コンスタントバッファ更新定義
 			bool isInit = false;
 			Shader.SetConstantBufferUpdateFunc("CB_LightParam", (s, i) => {
@@ -492,11 +491,12 @@ namespace Renderer
 
 			// 描画アクション
 			Action func = () => {
-				ksRenderer.ClearColorBuffer(new Color4(1, 0, 0, 0));
-				ksRenderer.ClearDepthBuffer();
+				// TODO:要クリア
+				//context.ClearRenderTarget(new Color4(1, 0, 0, 0));
+				//context.ClearDepthStencil();
 				int shadowMapBindingPoint = 4;
-				ksRenderer.SetShaderResourcePS(shadowMapBindingPoint, shadowMap_.Map);
-				ksRenderer.SetSamplerStatePS(shadowMapBindingPoint, shadowMap_.Map.AddressingModeU, shadowMap_.Map.AddressingModeV);
+				GraphicsCore.SetShaderResourcePS(shadowMapBindingPoint, shadowMap_.Map);
+				GraphicsCore.SetSamplerStatePS(shadowMapBindingPoint, shadowMap_.Map.AddressingModeU, shadowMap_.Map.AddressingModeV);
 				ShaderManager.UserShaderBindHandler += overrideFunc;
 				SceneDraw();
 				ShaderManager.UserShaderBindHandler -= overrideFunc;
@@ -506,7 +506,7 @@ namespace Renderer
 
 			if (localCapture_.Count > 0) {
 				foreach (var c in localCapture_) {
-					c.Capture(func, 2);
+					c.Capture(context, func, 2);
 				}
 
 				int size = cubeMapInfo_.numZ * cubeMapInfo_.numY * cubeMapInfo_.numX * 4 * 2;

@@ -224,24 +224,24 @@ namespace Lib
 			// テクスチャ
 			for (int i = 0; i < psShaderViews_.Length; i++) {
 				if (psShaderViews_[i] == null) break;
-				Renderer.SetShaderResourcePS(i, psShaderViews_[i]);
+				GraphicsCore.SetShaderResourcePS(i, psShaderViews_[i]);
 				Texture tex = psShaderViews_[i] as Texture;
 				if (tex != null) {
-					Renderer.SetSamplerStatePS(i, tex.AddressingModeU, tex.AddressingModeV);
+					GraphicsCore.SetSamplerStatePS(i, tex.AddressingModeU, tex.AddressingModeV);
 				}
 			}
 			for (int i = 0; i < vsShaderViews_.Length; i++) {
 				if (vsShaderViews_[i] == null) break;
-				Renderer.SetShaderResourceVS(i, vsShaderViews_[i]);
+				GraphicsCore.SetShaderResourceVS(i, vsShaderViews_[i]);
 				Texture tex = vsShaderViews_[i] as Texture;
 				if (tex != null) {
-					Renderer.SetSamplerStateVS(i, tex.AddressingModeU, tex.AddressingModeV);
+					GraphicsCore.SetSamplerStateVS(i, tex.AddressingModeU, tex.AddressingModeV);
 				}
 			}
 
 			// レンダーステート
-			Renderer.SetDepthState(DepthState);
-			Renderer.SetBlendState(BlendState);
+			GraphicsCore.SetDepthState(DepthState);
+			GraphicsCore.SetBlendState(BlendState);
 		}
 
 

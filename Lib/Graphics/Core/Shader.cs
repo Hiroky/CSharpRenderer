@@ -265,7 +265,7 @@ namespace Lib
 		/// <param name="data"></param>
 		public void Initialize(byte[] data)
 		{
-			var device = Renderer.D3dDevice;
+			var device = GraphicsCore.D3dDevice;
 
 			// byte配列からポインタを取得
 			var handle = GCHandle.Alloc(data, GCHandleType.Pinned);
@@ -313,7 +313,7 @@ namespace Lib
 		/// <param name="data"></param>
 		public void Initialize(InitDesc desc)
 		{
-			var device = Renderer.D3dDevice;
+			var device = GraphicsCore.D3dDevice;
 			shaderId_ = desc.id;
 			name_ = desc.name;
 
@@ -444,7 +444,7 @@ namespace Lib
 		/// </summary>
 		public void Bind()
 		{
-			var context = Renderer.D3dCurrentContext;
+			var context = GraphicsCore.D3dImmediateContext;
 			context.InputAssembler.InputLayout = inputLayout_;
 			context.VertexShader.Set(vertexShader_);
 			context.PixelShader.Set(pixelShader_);
@@ -461,8 +461,7 @@ namespace Lib
 		/// コンスタントバッファ解決
 		/// </summary>
 		/// <param name="reflection"></param>
-		private
-		void ResolveConstantBuffer(ShaderReflection reflection)
+		private void ResolveConstantBuffer(ShaderReflection reflection)
 		{
 			// すべてのコンスタントバッファを名前で辞書化する
 			if (constantBufferObjects_ == null) {
@@ -483,7 +482,7 @@ namespace Lib
 						buffer_desc.CpuAccessFlags = CpuAccessFlags.None;
 						buffer_desc.BindFlags = BindFlags.ConstantBuffer;
 						buffer_desc.SizeInBytes = obj.inst_.BufferSize;
-						obj.buffer_ = new D3D11Buffer(Renderer.D3dDevice, buffer_desc);
+						obj.buffer_ = new D3D11Buffer(GraphicsCore.D3dDevice, buffer_desc);
 						constantBufferDictionary_[n] = obj;
 					}
 
@@ -513,8 +512,7 @@ namespace Lib
 		/// </summary>
 		/// <param name="attr"></param>
 		/// <returns></returns>
-		private
-		static int GetVertexLayoutID(uint attr)
+		private static int GetVertexLayoutID(uint attr)
 		{
 			//シャドウ等の直接頂点バッファレイアウトに関係ないアトリビュートはマスクする
 			attr &= ~(uint)(VertexAttr.SHADOW);
@@ -535,8 +533,7 @@ namespace Lib
 		/// <summary>
 		/// コンスタントバッファ廃棄
 		/// </summary>
-		public
-		static void DisposeConstantBuffer()
+		public static void DisposeConstantBuffer()
 		{
 			foreach (var obj in constantBufferDictionary_) {
 				if (obj.Value != null) {
@@ -551,8 +548,7 @@ namespace Lib
 		/// </summary>
 		/// <param name="name"></param>
 		/// <param name="func"></param>
-		public
-		static void SetConstantBufferUpdateFunc(string name, Func<Shader, ConstantBufferInstance, bool> func)
+		public static void SetConstantBufferUpdateFunc(string name, Func<Shader, ConstantBufferInstance, bool> func)
 		{
 			if (ConstantBufferDictionary.ContainsKey(name)) {
 				ConstantBufferDictionary[name].updateFunc_ = func;
@@ -591,15 +587,13 @@ namespace Lib
 		D3DShaderReflection reflector_;
 
 
-		public
-		ShaderReflection(ShaderBytecode byteCode)
+		public ShaderReflection(ShaderBytecode byteCode)
 		{
 			reflector_ = new D3DShaderReflection(byteCode);
 		}
 
 
-		public
-		void Dispose()
+		public void Dispose()
 		{
 			reflector_.Dispose();
 		}
@@ -609,8 +603,7 @@ namespace Lib
 		/// 頂点バッファレイアウトのアトリビュートを返す
 		/// </summary>
 		/// <returns></returns>
-		public
-		uint GetVertexLayoutAttribute()
+		public uint GetVertexLayoutAttribute()
 		{
 			uint attr = 0;
 			ShaderDescription shader_desc = reflector_.Description;
@@ -631,8 +624,7 @@ namespace Lib
 		/// コンスタントバッファの名前のリストを返す
 		/// </summary>
 		/// <returns></returns>
-		public
-		List<string> GetConstantBufferNameList()
+		public List<string> GetConstantBufferNameList()
 		{
 			var list = new List<string>();
 			int cb_num = reflector_.Description.ConstantBuffers;
@@ -651,8 +643,7 @@ namespace Lib
 		/// <param name="name"></param>
 		/// <param name="bindIndex"></param>
 		/// <returns></returns>
-		public
-		bool FindConstantBufferByName(string name, out int bindIndex)
+		public bool FindConstantBufferByName(string name, out int bindIndex)
 		{
 			// コンスタントバッファの実体をとってきて確実にある状況でGetResourceBindingDescriptionを呼ぶ
 			int cb_num = reflector_.Description.ConstantBuffers;
@@ -673,8 +664,7 @@ namespace Lib
 		/// </summary>
 		/// <param name="name"></param>
 		/// <returns></returns>
-		public
-		ConstantBufferInstance CreateConstantBufferInstance(string name)
+		public ConstantBufferInstance CreateConstantBufferInstance(string name)
 		{
 			// コンスタントバッファの実体をとってきて確実にある状況でGetResourceBindingDescriptionを呼ぶ
 			int cb_num = reflector_.Description.ConstantBuffers;
@@ -746,16 +736,14 @@ namespace Lib
 		}
 
 
-		public
-		bool FindUniformVariableByName(string name, out uint offset, out uint size)
+		public bool FindUniformVariableByName(string name, out uint offset, out uint size)
 		{
 			offset = 0;
 			size = 0;
 			return true;
 		}
 
-		public
-		bool FindTextureBindByName(string name, out uint bindIndex)
+		public bool FindTextureBindByName(string name, out uint bindIndex)
 		{
 			bindIndex = 0;
 			return true;
@@ -795,7 +783,7 @@ namespace Lib
 		/// <param name="desc"></param>
 		public ComputeShader(InitDesc desc)
 		{
-			var device = Renderer.D3dDevice;
+			var device = GraphicsCore.D3dDevice;
 
 			var inc = new ShaderIncludeHandler(System.IO.Path.GetDirectoryName(desc.file_name));
 			using (var bytecode = ShaderBytecode.CompileFromFile(desc.file_name, desc.main, "cs_5_0", ShaderFlags.None, EffectFlags.None, desc.macro, inc)) {
@@ -809,7 +797,7 @@ namespace Lib
 						buffer_desc.CpuAccessFlags = CpuAccessFlags.None;
 						buffer_desc.BindFlags = BindFlags.ConstantBuffer;
 						buffer_desc.SizeInBytes = cbInst_.BufferSize;
-						constantBuffer_ = new D3D11Buffer(Renderer.D3dDevice, buffer_desc);
+						constantBuffer_ = new D3D11Buffer(GraphicsCore.D3dDevice, buffer_desc);
 					}
 				}
 			}
@@ -838,7 +826,7 @@ namespace Lib
 			buffer_desc.CpuAccessFlags = CpuAccessFlags.None;
 			buffer_desc.BindFlags = BindFlags.ConstantBuffer;
 			buffer_desc.SizeInBytes = bufferSize;
-			constantBuffer_ = new D3D11Buffer(Renderer.D3dDevice, buffer_desc);
+			constantBuffer_ = new D3D11Buffer(GraphicsCore.D3dDevice, buffer_desc);
 		}
 
 		/// <summary>
@@ -850,7 +838,7 @@ namespace Lib
 			byte[] data = cbInst_.Buffer;
 			SlimDX.DataStream s = new SlimDX.DataStream(data, true, true);
 			SlimDX.DataBox box = new SlimDX.DataBox(0, 0, s);
-			Renderer.D3dCurrentContext.UpdateSubresource(box, constantBuffer_, 0);
+			GraphicsCore.D3dImmediateContext.UpdateSubresource(box, constantBuffer_, 0);
 			s.Close();
 		}
 
@@ -869,7 +857,7 @@ namespace Lib
 		/// </summary>
 		public void Bind()
 		{
-			var context = Renderer.D3dCurrentContext;
+			var context = GraphicsCore.D3dImmediateContext;
 			context.ComputeShader.Set(shader_);
 			context.ComputeShader.SetConstantBuffer(constantBuffer_, 0);
 			if( resources_ != null ) {
@@ -894,7 +882,7 @@ namespace Lib
 		/// </summary>
 		public void UnBind()
 		{
-			var context = Renderer.D3dCurrentContext;
+			var context = GraphicsCore.D3dImmediateContext;
 			context.ComputeShader.Set(null);
 			context.ComputeShader.SetConstantBuffer(null, 0);
 			if (resources_ != null) {
@@ -911,7 +899,7 @@ namespace Lib
 		/// </summary>
 		public void Dispatch(int x, int y, int z)
 		{
-			Renderer.D3dCurrentContext.Dispatch(x, y, z);
+			GraphicsCore.D3dImmediateContext.Dispatch(x, y, z);
 		}
 
 		/// <summary>

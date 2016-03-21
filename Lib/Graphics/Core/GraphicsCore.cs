@@ -82,17 +82,12 @@ namespace Lib
 		}
 	}
 
-	public static class Renderer
-	{
-		/// <summary>
-		///  コンテキストタイプ
-		/// </summary>
-		public enum ContextType
-		{
-			Immediate,
-			Deferred,
-		}
 
+	/// <summary>
+	/// グラフィックスコア機能
+	/// </summary>
+	public static class GraphicsCore
+	{
 		/// <summary>
 		/// フレームバッファ
 		/// </summary>
@@ -124,9 +119,6 @@ namespace Lib
 		static private RenderTargetView defaultRenderTarget_;
 		static private Texture defaultDepthStencil_;
 		static private Texture defaultColorBuffer_;
-		static private FrameBuffer currentFrameBuffer_;
-		static private int targetWidth_;
-		static private int targetHeight_;
 		static private Camera camera3d_;
 		static private Camera camera2d_;
 
@@ -141,15 +133,14 @@ namespace Lib
 		static private RenderState.RasterizerState currentRasterizerState_ = RenderState.RasterizerState.Max;
 		static private RenderState.PrimitiveTopology currentTopology_ = RenderState.PrimitiveTopology.Max;
 
-		static private ContextType contextType_;
 		static Image wpfImage_;
 
 		static public System.IntPtr TargetHandle { get { return targetHandle_; } }
 		static public DxDevice D3dDevice { get; set; }
-		static public DxDeviceContext D3dCurrentContext { get; set; }
 		static public DxDeviceContext D3dImmediateContext { get; set; }
-		static public DxDeviceContext D3dDeferredContext { get; set; }
 		static public SwapChain SwapChain { get; set; }
+
+		// TODO:内部管理はなくす
 		static public Camera Camera3D { get { return camera3d_; } }
 		static public Camera Camera2D { get { return camera2d_; } }
 		static public Camera CurrentDrawCamera { get; set; }
@@ -162,9 +153,11 @@ namespace Lib
 		// 現状WPF用
 		static public Texture DefaultColorBuffer { get { return defaultColorBuffer_; } }
 
-		static public int TargetWidth { get { return targetWidth_; } }
-		static public int TargetHeight { get { return targetHeight_; } }
+		static public int TargetWidth { get; private set; }
+		static public int TargetHeight { get; private set; }
 
+		// コンテキスト
+		static public GraphicsContext ImmediateContext { get; private set; }
 
 		// TODO:ライトマネージャを用意するべき
 		static private Vector4 lightPos_;
@@ -178,9 +171,9 @@ namespace Lib
 		/// フォームを渡して初期化
 		/// </summary>
 		/// <param name="form"></param>
-		static public void Initialize(RenderForm form, ContextType contextType = ContextType.Immediate)
+		static public void Initialize(RenderForm form)
 		{
-			Initialize(form.Handle, form.ClientSize.Width, form.ClientSize.Height, contextType);
+			Initialize(form.Handle, form.ClientSize.Width, form.ClientSize.Height);
 
 			// リサイズコールバック
 			form.UserResized += (o, e) => {
@@ -192,9 +185,9 @@ namespace Lib
 		/// コントロールから初期化
 		/// </summary>
 		/// <param name="control"></param>
-		static public void Initialize(System.Windows.Forms.Control control, ContextType contextType = ContextType.Immediate)
+		static public void Initialize(System.Windows.Forms.Control control)
 		{
-			Initialize(control.Handle, control.Width, control.Height, contextType);
+			Initialize(control.Handle, control.Width, control.Height);
 
 			// リサイズコールバック
 			control.Resize += (o, e) => {
@@ -209,7 +202,7 @@ namespace Lib
 		/// <param name="handle"></param>
 		/// <param name="width"></param>
 		/// <param name="height"></param>
-		static public void Initialize(System.IntPtr handle, int width, int height, ContextType contextType = ContextType.Immediate)
+		static public void Initialize(System.IntPtr handle, int width, int height)
 		{
 			DxDevice device;
 			SwapChain swapChain;
@@ -246,16 +239,11 @@ namespace Lib
 
 			// setting a viewport is required if you want to actually see anything
 			D3dImmediateContext = device.ImmediateContext;
-			if (contextType == ContextType.Immediate) {
-				D3dCurrentContext = D3dImmediateContext;
-			} else {
-				D3dDeferredContext = new DxDeviceContext(D3dDevice);
-				D3dCurrentContext = D3dDeferredContext;
-			}
+			ImmediateContext = new GraphicsContext(D3dImmediateContext);
 
 			var viewport = new Viewport(0.0f, 0.0f, width, height);
-			targetWidth_ = width;
-			targetHeight_ = height;
+			TargetWidth = width;
+			TargetHeight = height;
 
 			// デプスバッファ
 			defaultDepthStencil_ = new Texture(new Texture.InitDesc {
@@ -264,14 +252,12 @@ namespace Lib
 				//format = Format.R24G8_Typeless,
 				format = Format.R32_Typeless,
 				bindFlag = TextureBuffer.BindFlag.IsDepthStencil,
-			}
-				);
-			D3dCurrentContext.OutputMerger.SetTargets(defaultDepthStencil_.DepthStencilView, defaultRenderTarget_);
-			D3dCurrentContext.Rasterizer.SetViewports(viewport);
-
+			});
+			D3dImmediateContext.OutputMerger.SetTargets(defaultDepthStencil_.DepthStencilView, defaultRenderTarget_);
+			D3dImmediateContext.Rasterizer.SetViewports(viewport);
 
 			// トポロジーをトライアングルリスト固定でセットしておく
-			D3dCurrentContext.InputAssembler.PrimitiveTopology = PrimitiveTopology.TriangleList;
+			D3dImmediateContext.InputAssembler.PrimitiveTopology = PrimitiveTopology.TriangleList;
 
 			// カメラの初期化
 			camera3d_ = new Camera();
@@ -292,12 +278,11 @@ namespace Lib
 			InitializeQuery();
 		}
 
-
 		/// <summary>
 		/// WPF用初期化
 		/// </summary>
 		/// <param name="img"></param>
-		static public void InitializeForWPF(Image img, ContextType contextType = ContextType.Immediate)
+		static public void InitializeForWPF(Image img)
 		{
 			//初期化
 			int w, h;
@@ -308,7 +293,7 @@ namespace Lib
 				w = (int)img.DesiredSize.Width;
 				h = (int)img.DesiredSize.Height;
 			}
-			InitializeForWPF(w, h, contextType);
+			InitializeForWPF(w, h);
 
 			// プロクシイメージ
 			proxyImage_ = new D3DImageSlimDX();
@@ -317,18 +302,16 @@ namespace Lib
 			//img.SizeChanged += (o, ea) => {
 			//	Renderer.ResizeTargetPanel((int)img.DesiredSize.Width, (int)img.DesiredSize.Height);
 			//};
-			proxyImage_.SetBackBufferSlimDX((Texture2D)Renderer.DefaultColorBuffer.TextureResource);
+			proxyImage_.SetBackBufferSlimDX((Texture2D)GraphicsCore.DefaultColorBuffer.TextureResource);
 		}
-
 
 		/// <summary>
 		/// WPF用初期化
 		/// </summary>
 		/// <param name="width"></param>
 		/// <param name="height"></param>
-		static public void InitializeForWPF(int width, int height, ContextType contextType = ContextType.Immediate)
+		static public void InitializeForWPF(int width, int height)
 		{
-			contextType_ = contextType;
 #if false
 			Factory1 factory = new Factory1();
 			Adapter adapter = GetAdapter(factory);
@@ -337,6 +320,7 @@ namespace Lib
 			D3dDeviceContext = D3dDevice.ImmediateContext;
 			factory.Dispose();
 #else
+
 #if DEBUG
 			DeviceCreationFlags flags = DeviceCreationFlags.Debug;
 #else
@@ -344,13 +328,9 @@ namespace Lib
 #endif
 			D3dDevice = new DxDevice(DriverType.Hardware, flags, FeatureLevel.Level_11_0);
 			D3dImmediateContext = D3dDevice.ImmediateContext;
-			if (contextType == ContextType.Immediate) {
-				D3dCurrentContext = D3dImmediateContext;
-			} else {
-				D3dDeferredContext = new DxDeviceContext(D3dDevice);
-				D3dCurrentContext = D3dDeferredContext;
-			}
+
 #endif
+			ImmediateContext = new GraphicsContext(D3dImmediateContext);
 
 			// カラーバッファ
 			defaultColorBuffer_ = new Texture(new Texture.InitDesc {
@@ -373,13 +353,13 @@ namespace Lib
 			});
 
 			var viewport = new Viewport(0.0f, 0.0f, width, height);
-			targetWidth_ = width;
-			targetHeight_ = height;
-			D3dCurrentContext.OutputMerger.SetTargets(defaultDepthStencil_.DepthStencilView, defaultRenderTarget_);
-			D3dCurrentContext.Rasterizer.SetViewports(viewport);
+			TargetWidth = width;
+			TargetHeight = height;
+			D3dImmediateContext.OutputMerger.SetTargets(defaultDepthStencil_.DepthStencilView, defaultRenderTarget_);
+			D3dImmediateContext.Rasterizer.SetViewports(viewport);
 
 			// トポロジーをトライアングルリスト固定でセットしておく
-			D3dCurrentContext.InputAssembler.PrimitiveTopology = PrimitiveTopology.TriangleList;
+			D3dImmediateContext.InputAssembler.PrimitiveTopology = PrimitiveTopology.TriangleList;
 
 			// カメラの初期化
 			camera3d_ = new Camera();
@@ -399,7 +379,6 @@ namespace Lib
 
 			InitializeQuery();
 		}
-
 
 		/// <summary>
 		/// 最適グラフィックスアダプタを返す
@@ -440,7 +419,6 @@ namespace Lib
 			desc = new QueryDescription(QueryType.Timestamp, QueryFlags.None);
 			timerQuery_ = new Query(D3dDevice, desc);
 		}
-
 
 		/// <summary>
 		/// ラスタライザステート
@@ -491,7 +469,9 @@ namespace Lib
 			SetRasterizerState(RenderState.RasterizerState.CullBack);
 		}
 
-
+		/// <summary>
+		/// ブレンドステート
+		/// </summary>
 		static void InitializeBlendState()
 		{
 			var device = D3dDevice;
@@ -561,8 +541,6 @@ namespace Lib
 			SetBlendState(RenderState.BlendState.None);
 		}
 
-
-
 		/// <summary>
 		/// デプスステンシルステート
 		/// </summary>
@@ -612,8 +590,6 @@ namespace Lib
 			SetDepthState(RenderState.DepthState.Normal);
 		}
 
-
-
 		/// <summary>
 		/// サンプラステート
 		/// 現状フィルタはリニア固定
@@ -656,10 +632,8 @@ namespace Lib
 
 			// 初期値
 			int wrap = (int)RenderState.TextureAddressing.Wrap;
-			D3dCurrentContext.PixelShader.SetSampler(samplerState_[wrap][wrap], 0);
+			D3dImmediateContext.PixelShader.SetSampler(samplerState_[wrap][wrap], 0);
 		}
-
-
 
 		/// <summary>
 		/// 終了処理
@@ -701,12 +675,8 @@ namespace Lib
 			if (proxyImage_ != null) {
 				proxyImage_.Dispose();
 			}
-			if (D3dDeferredContext != null) {
-				D3dDeferredContext.Dispose();
-			}
 			D3dDevice.Dispose();
 		}
-
 
 		/// <summary>
 		/// カメラ、ライトの更新が行われます
@@ -721,12 +691,9 @@ namespace Lib
 			}
 		}
 
-
 		/// <summary>
 		/// ターゲットがリサイズされたときに呼ぶ必要がある
 		/// </summary>
-		/// <param name="width"></param>
-		/// <param name="height"></param>
 		static public void ResizeTargetPanel(int width, int height)
 		{
 			if (width == 0 || height == 0) {
@@ -772,16 +739,16 @@ namespace Lib
 
 				// プロクシイメージ
 				if (proxyImage_ != null) {
-					proxyImage_.SetBackBufferSlimDX((Texture2D)Renderer.DefaultColorBuffer.TextureResource);
+					proxyImage_.SetBackBufferSlimDX((Texture2D)GraphicsCore.DefaultColorBuffer.TextureResource);
 				}
 
-				D3dCurrentContext.OutputMerger.SetTargets(defaultDepthStencil_.DepthStencilView, defaultRenderTarget_);
+				D3dImmediateContext.OutputMerger.SetTargets(defaultDepthStencil_.DepthStencilView, defaultRenderTarget_);
 
 				// ビューポートを再セット(フルスクリーンビューポート)
 				var new_viewport = new Viewport(0.0f, 0.0f, width, height);
-				D3dCurrentContext.Rasterizer.SetViewports(new_viewport);
-				targetWidth_ = width;
-				targetHeight_ = height;
+				D3dImmediateContext.Rasterizer.SetViewports(new_viewport);
+				TargetWidth = width;
+				TargetHeight = height;
 
 				// カメラ再セット(仮)
 				camera3d_.SetAspect((float)width / height);
@@ -791,82 +758,17 @@ namespace Lib
 		}
 
 		/// <summary>
-		/// カラーバッファクリア
-		/// </summary>
-		/// <param name="color"></param>
-		static public void ClearColorBuffer(Color4 color)
-		{
-			if (currentFrameBuffer_ != null) {
-				foreach (var b in currentFrameBuffer_.color_buffer_) {
-					if (!currentFrameBuffer_.is_array_buffer_) {
-						D3dCurrentContext.ClearRenderTargetView(b.RenderTargetView, color);
-					} else {
-						D3dCurrentContext.ClearRenderTargetView(b.ArrayRenderTargetView[currentFrameBuffer_.array_buffer_index_], color);
-					}
-				}
-			} else {
-				D3dCurrentContext.ClearRenderTargetView(defaultRenderTarget_, color);
-			}
-		}
-
-		static public void ClearColorBuffer(Texture buffer, Color4 color)
-		{
-			D3dCurrentContext.ClearRenderTargetView(buffer.RenderTargetView, color);
-		}
-
-		/// <summary>
-		/// デプスバッファクリア
-		/// </summary>
-		static public void ClearDepthBuffer()
-		{
-			if (currentFrameBuffer_ != null) {
-				D3dCurrentContext.ClearDepthStencilView(currentFrameBuffer_.depth_stencil_.DepthStencilView, DepthStencilClearFlags.Depth, 1, 0);
-			} else {
-				D3dCurrentContext.ClearDepthStencilView(defaultDepthStencil_.DepthStencilView, DepthStencilClearFlags.Depth, 1, 0);
-			}
-		}
-
-
-		/// <summary>
-		/// 
-		/// </summary>
-		static public void BeginDraw()
-		{
-		}
-
-
-		/// <summary>
-		/// 
-		/// </summary>
-		static public void EndDraw()
-		{
-			if (D3dCurrentContext != D3dImmediateContext) {
-				var list = D3dDeferredContext.FinishCommandList(false);
-				D3dImmediateContext.ExecuteCommandList(list, false);
-				list.Dispose();
-				D3dImmediateContext.End(isFinishQuery_);
-				D3dImmediateContext.Flush();
-			} else {
-				if (SwapChain != null) {
-					D3dImmediateContext.End(isFinishQuery_);
-				}
-			}
-		}
-
-
-		/// <summary>
 		/// スワップ
 		/// </summary>
 		static public void Present()
 		{
 			if (SwapChain != null) {
+				D3dImmediateContext.End(isFinishQuery_);
 				SwapChain.Present(1, PresentFlags.None);
 			} else {
-				// イミディエイトの時はここでフラッシュする
-				if (D3dCurrentContext == D3dImmediateContext) {
-					D3dImmediateContext.End(isFinishQuery_);
-					D3dImmediateContext.Flush();
-				}
+				// フラッシュ
+				D3dImmediateContext.End(isFinishQuery_);
+				D3dImmediateContext.Flush();
 				if (proxyImage_ != null) proxyImage_.InvalidateD3DImage();
 			}
 		}
@@ -881,69 +783,16 @@ namespace Lib
 			return D3dImmediateContext.GetData<bool>(isFinishQuery_);
 		}
 
-
 		/// <summary>
 		/// デフォルトのバッファをバインド
 		/// </summary>
 		static public void BeginRender()
 		{
-			D3dCurrentContext.OutputMerger.SetTargets(defaultDepthStencil_.DepthStencilView, defaultRenderTarget_);
+			D3dImmediateContext.OutputMerger.SetTargets(defaultDepthStencil_.DepthStencilView, defaultRenderTarget_);
 
-			var viewport = new Viewport(0.0f, 0.0f, targetWidth_, targetHeight_);
-			D3dCurrentContext.Rasterizer.SetViewports(viewport);
+			var viewport = new Viewport(0.0f, 0.0f, TargetWidth, TargetHeight);
+			D3dImmediateContext.Rasterizer.SetViewports(viewport);
 		}
-
-
-		/// <summary>
-		/// フレームバッファをバインド
-		/// </summary>
-		/// <param name="fb"></param>
-		static public void BeginRender(FrameBuffer fb)
-		{
-			currentFrameBuffer_ = fb;
-
-			RenderTargetView[] rtvs = new RenderTargetView[currentFrameBuffer_.color_buffer_.Length];
-			if (!fb.is_array_buffer_) {
-				for (int i = 0; i < currentFrameBuffer_.color_buffer_.Length; i++) {
-					rtvs[i] = currentFrameBuffer_.color_buffer_[i].RenderTargetView;
-				}
-			} else {
-				// アレイバッファから選択してバインド
-				for (int i = 0; i < currentFrameBuffer_.color_buffer_.Length; i++) {
-					rtvs[i] = currentFrameBuffer_.color_buffer_[i].ArrayRenderTargetView[fb.array_buffer_index_];
-				}
-			}
-			var dsv = currentFrameBuffer_.depth_stencil_ != null ? currentFrameBuffer_.depth_stencil_.DepthStencilView : null;
-			D3dCurrentContext.OutputMerger.SetTargets(dsv, rtvs);
-			int w, h;
-			if(currentFrameBuffer_.color_buffer_.Length > 0) {
-				w = currentFrameBuffer_.color_buffer_[0].Width >> rtvs[0].Description.MipSlice;
-				h = currentFrameBuffer_.color_buffer_[0].Height >> rtvs[0].Description.MipSlice;
-			} else {
-				w = currentFrameBuffer_.depth_stencil_.Width;
-				h = currentFrameBuffer_.depth_stencil_.Height;
-			}
-			var viewport = new Viewport(0.0f, 0.0f, w, h);
-			D3dCurrentContext.Rasterizer.SetViewports(viewport);
-		}
-
-
-		/// <summary>
-		/// レンダリング終了
-		/// </summary>
-		static public void EndRender()
-		{
-			// フレームバッファの場合はデフォルトをバインドする
-			//if (currentFrameBuffer_ != null) {
-			//	BeginRender();
-			//} else 
-			{
-				// バッファのバインドを外す
-				D3dCurrentContext.OutputMerger.SetTargets(null, new RenderTargetView[0]);
-			}
-			currentFrameBuffer_ = null;
-		}
-
 
 		/// <summary>
 		/// ブレンドステート設定
@@ -953,7 +802,7 @@ namespace Lib
 		{
 			//if (currentBlendState_ != state) 
 			{
-				D3dCurrentContext.OutputMerger.BlendState = blendState_[(int)state];
+				D3dImmediateContext.OutputMerger.BlendState = blendState_[(int)state];
 				currentBlendState_ = state;
 			}
 		}
@@ -965,7 +814,7 @@ namespace Lib
 		static public void SetDepthState(RenderState.DepthState state)
 		{
 			if (currentDepthState_ != state) {
-				D3dCurrentContext.OutputMerger.DepthStencilState = depthStencilState_[(int)state];
+				D3dImmediateContext.OutputMerger.DepthStencilState = depthStencilState_[(int)state];
 				currentDepthState_ = state;
 			}
 		}
@@ -977,7 +826,7 @@ namespace Lib
 		static public void SetRasterizerState(RenderState.RasterizerState state)
 		{
 			if (currentRasterizerState_ != state) {
-				D3dCurrentContext.Rasterizer.State = rasterizerState_[(int)state];
+				D3dImmediateContext.Rasterizer.State = rasterizerState_[(int)state];
 				currentRasterizerState_ = state;
 			}
 		}
@@ -989,7 +838,7 @@ namespace Lib
 		static public void SetPrimitiveTopology(RenderState.PrimitiveTopology state)
 		{
 			if (currentTopology_ != state) {
-				D3dCurrentContext.InputAssembler.PrimitiveTopology = primitiveTopology_[(int)state];
+				D3dImmediateContext.InputAssembler.PrimitiveTopology = primitiveTopology_[(int)state];
 				currentTopology_ = state;
 			}
 		}
@@ -1017,15 +866,15 @@ namespace Lib
 		/// <param name="v"></param>
 		static public void SetShaderResourcePS(int index, IShaderView view)
 		{
-			D3dCurrentContext.PixelShader.SetShaderResource(view.ShaderResourceView, index);
+			D3dImmediateContext.PixelShader.SetShaderResource(view.ShaderResourceView, index);
 		}
 		static public void SetShaderResourceVS(int index, IShaderView view)
 		{
-			D3dCurrentContext.VertexShader.SetShaderResource(view.ShaderResourceView, index);
+			D3dImmediateContext.VertexShader.SetShaderResource(view.ShaderResourceView, index);
 		}
 		static public void SetShaderResourceCS(int index, IShaderView view)
 		{
-			D3dCurrentContext.ComputeShader.SetShaderResource(view.ShaderResourceView, index);
+			D3dImmediateContext.ComputeShader.SetShaderResource(view.ShaderResourceView, index);
 		}
 
 
@@ -1037,15 +886,15 @@ namespace Lib
 		/// <param name="v"></param>
 		static public void SetSamplerStatePS(int index, RenderState.TextureAddressing u, RenderState.TextureAddressing v)
 		{
-			D3dCurrentContext.PixelShader.SetSampler(samplerState_[(int)u][(int)v], index);
+			D3dImmediateContext.PixelShader.SetSampler(samplerState_[(int)u][(int)v], index);
 		}
 		static public void SetSamplerStateVS(int index, RenderState.TextureAddressing u, RenderState.TextureAddressing v)
 		{
-			D3dCurrentContext.VertexShader.SetSampler(samplerState_[(int)u][(int)v], index);
+			D3dImmediateContext.VertexShader.SetSampler(samplerState_[(int)u][(int)v], index);
 		}
 		static public void SetSamplerStateCS(int index, RenderState.TextureAddressing u, RenderState.TextureAddressing v)
 		{
-			D3dCurrentContext.ComputeShader.SetSampler(samplerState_[(int)u][(int)v], index);
+			D3dImmediateContext.ComputeShader.SetSampler(samplerState_[(int)u][(int)v], index);
 		}
 	}
 }

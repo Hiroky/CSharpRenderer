@@ -133,10 +133,10 @@ namespace Lib
 		/// <summary>
 		/// 
 		/// </summary>
-		public void Capture(Action renderFunc, uint shBand = 0)
+		public void Capture(GraphicsContext context, Action renderFunc, uint shBand = 0)
 		{
 			// レンダリング
-			CubemapHelper.RenderingCubeMap(cubeMap_, depth_, Position, renderFunc);
+			CubemapHelper.RenderingCubeMap(context, cubeMap_, depth_, Position, renderFunc);
 
 			// PMREM
 			if (radianceMap_ != null) {

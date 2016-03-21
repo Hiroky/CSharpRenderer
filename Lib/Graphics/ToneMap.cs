@@ -13,7 +13,7 @@ namespace Lib
 		Texture luminanceAvg_;
 		Texture[] avgBuffer_;
 		Prim prim_;
-		Renderer.FrameBuffer frameBuffer_;
+		GraphicsCore.FrameBuffer frameBuffer_;
 
 		Shader downSample4Lum_;
 		Shader downSample4_;
@@ -59,7 +59,7 @@ namespace Lib
 			desc.width = w / 256;
 			desc.height = h / 256;
 			avgBuffer_[5] = new Texture(desc);
-			frameBuffer_ = new Renderer.FrameBuffer() {
+			frameBuffer_ = new GraphicsCore.FrameBuffer() {
 				color_buffer_ = new Texture[1],
 				depth_stencil_ = null,
 			};
@@ -123,56 +123,50 @@ namespace Lib
 		/// <summary>
 		/// 輝度算出
 		/// </summary>
-		public void CalcLuminance(Texture colorTex)
+		public void CalcLuminance(GraphicsContext context, Texture colorTex)
 		{
 			// 1/4
 			frameBuffer_.color_buffer_[0] = avgBuffer_[0];
-			Renderer.BeginRender(frameBuffer_);
+			context.SetRenderTargets(frameBuffer_.color_buffer_, null);
 			prim_.GetMaterial().SetShader(downSample4Lum_);
 			prim_.GetMaterial().SetShaderViewPS(0, colorTex);
 			prim_.Draw();
-			Renderer.EndRender();
 
 			// 1/4
 			frameBuffer_.color_buffer_[0] = avgBuffer_[1];
-			Renderer.BeginRender(frameBuffer_);
+			context.SetRenderTargets(frameBuffer_.color_buffer_, null);
 			prim_.GetMaterial().SetShader(downSample4_);
 			prim_.GetMaterial().SetShaderViewPS(0, avgBuffer_[0]);
 			prim_.Draw();
-			Renderer.EndRender();
 
 			// 1/2
 			frameBuffer_.color_buffer_[0] = avgBuffer_[2];
-			Renderer.BeginRender(frameBuffer_);
+			context.SetRenderTargets(frameBuffer_.color_buffer_, null);
 			prim_.GetMaterial().SetShader(downSample2_);
 			prim_.GetMaterial().SetShaderViewPS(0, avgBuffer_[1]);
 			prim_.Draw();
-			Renderer.EndRender();
 
 			// 1/2
 			frameBuffer_.color_buffer_[0] = avgBuffer_[3];
-			Renderer.BeginRender(frameBuffer_);
+			context.SetRenderTargets(frameBuffer_.color_buffer_, null);
 			prim_.GetMaterial().SetShaderViewPS(0, avgBuffer_[2]);
 			prim_.Draw();
-			Renderer.EndRender();
 
 			// 1/2
 			frameBuffer_.color_buffer_[0] = avgBuffer_[4];
-			Renderer.BeginRender(frameBuffer_);
+			context.SetRenderTargets(frameBuffer_.color_buffer_, null);
 			prim_.GetMaterial().SetShaderViewPS(0, avgBuffer_[3]);
 			prim_.Draw();
-			Renderer.EndRender();
 
 			// 1/2
 			frameBuffer_.color_buffer_[0] = avgBuffer_[5];
-			Renderer.BeginRender(frameBuffer_);
+			context.SetRenderTargets(frameBuffer_.color_buffer_, null);
 			prim_.GetMaterial().SetShaderViewPS(0, avgBuffer_[4]);
 			prim_.Draw();
-			Renderer.EndRender();
 
 			// 最終
 			if (!initBuffer_) {
-				Renderer.ClearColorBuffer(luminanceAvg_, new Color4(0, 0, 0, 0));
+				context.ClearRenderTarget(luminanceAvg_, new Color4(0, 0, 0, 0));
 				initBuffer_ = true;
 			} 
 			lumResolveShader_.Bind();

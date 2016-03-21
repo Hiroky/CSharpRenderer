@@ -12,7 +12,7 @@ namespace Lib
 		Texture linearHalfBuffer_;
 		Shader linearizeShader_;
 		Shader halfLinearizeShader_;
-		Renderer.FrameBuffer frameBuffer_;
+		GraphicsCore.FrameBuffer frameBuffer_;
 
 		struct DepthParam
 		{
@@ -39,7 +39,7 @@ namespace Lib
 				return true;
 			});
 
-			frameBuffer_ = new Renderer.FrameBuffer();
+			frameBuffer_ = new GraphicsCore.FrameBuffer();
 		}
 
 		/// <summary>
@@ -87,7 +87,7 @@ namespace Lib
 		/// <summary>
 		/// 
 		/// </summary>
-		public void Dispatch(Texture depth, Camera camera)
+		public void Dispatch(GraphicsContext context, Texture depth, Camera camera)
 		{
 			float near = camera.Near;
 			float far = camera.Far;
@@ -95,9 +95,8 @@ namespace Lib
 			param_.g_ReprojectDepthBias = far / (far * near);
 			frameBuffer_.color_buffer_ = new Texture[1] { linearBuffer_ };
 			frameBuffer_.depth_stencil_ = null;
-			Renderer.BeginRender(frameBuffer_);
+			context.SetRenderTargets(frameBuffer_.color_buffer_, frameBuffer_.depth_stencil_);
 			RenderingUtil.DrawScreen(linearizeShader_, new Texture[] { depth });
-			Renderer.EndRender();
 		}
 	}
 }

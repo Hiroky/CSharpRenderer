@@ -169,9 +169,9 @@ namespace Lib
 
 			// 描画
 			if (count > 1) {
-				Renderer.D3dCurrentContext.DrawInstanced(vertexNum_, count, 0, 0);
+				GraphicsCore.D3dImmediateContext.DrawInstanced(vertexNum_, count, 0, 0);
 			} else {
-				Renderer.D3dCurrentContext.Draw(vertexNum_, 0);
+				GraphicsCore.D3dImmediateContext.Draw(vertexNum_, 0);
 			}
 		}
 

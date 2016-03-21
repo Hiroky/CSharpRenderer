@@ -260,7 +260,7 @@ namespace Lib
 			uint flag = activeShader_.CBufferBindFlag;
 			if ((flag & (uint)Shader.SystemCBufferFlag.TRANSFORM) != 0) {
 				var cbTrans = Shader.ConstantBufferDictionary["CB_Transform"];
-				Camera camera = Renderer.CurrentDrawCamera;
+				Camera camera = GraphicsCore.CurrentDrawCamera;
 				dynamic cb = cbTrans.inst_;
 
 				// 行列キャッシュ
@@ -281,12 +281,12 @@ namespace Lib
 				// TODO:カメラによるキャッシュ
 				cb.c_view_matrix = Matrix.Transpose(camera.ViewMatrix);
 				cb.c_proj_matrix = Matrix.Transpose(camera.ProjectionMatrix);
-				cb.c_viewSpaceLightPosition = Renderer.ViewSpaceLightPos;
+				cb.c_viewSpaceLightPosition = GraphicsCore.ViewSpaceLightPos;
 				cb.c_worldSpaceViewPosition = new Vector4(camera.Position, 1);
 
 				DataStream s = new DataStream(cbTrans.inst_.Buffer, true, true);
 				DataBox box = new DataBox(0, 0, s);
-				Renderer.D3dCurrentContext.UpdateSubresource(box, cbTrans.buffer_, 0);
+				GraphicsCore.D3dImmediateContext.UpdateSubresource(box, cbTrans.buffer_, 0);
 				s.Close();
 			}
 
@@ -298,7 +298,7 @@ namespace Lib
 					byte[] data = o.inst_.Buffer;
 					DataStream s = new DataStream(data, true, true);
 					DataBox box = new DataBox(0, 0, s);
-					Renderer.D3dCurrentContext.UpdateSubresource(box, o.buffer_, 0);
+					GraphicsCore.D3dImmediateContext.UpdateSubresource(box, o.buffer_, 0);
 					s.Close();
 				}
 			}
@@ -324,7 +324,7 @@ namespace Lib
 					}
 					s.Position = 0;
 					DataBox box = new DataBox(0, 0, s);
-					Renderer.D3dCurrentContext.UpdateSubresource(box, Shader.ConstantBufferDictionary["CB_User"].buffer_, 0);
+					GraphicsCore.D3dImmediateContext.UpdateSubresource(box, Shader.ConstantBufferDictionary["CB_User"].buffer_, 0);
 					s.Close();
 				}
 			}

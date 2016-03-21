@@ -8,7 +8,7 @@ using Lib;
 using SlimDX;
 using SlimDX.Direct3D11;
 using DXMatrix = SlimDX.Matrix;
-using ksRenderer = Lib.Renderer;
+using MyRenderer = Lib.GraphicsCore;
 using ksGpuProfilePoint = Lib.Ext.GpuProfilePoint;
 
 namespace Renderer
@@ -23,8 +23,8 @@ namespace Renderer
 		Texture.InitDesc hdrResolveDesc_;
 		Texture hdrResolveBuffer_;
 		Texture lineTexture_;
-		ksRenderer.FrameBuffer gBufferBinder_;
-		ksRenderer.FrameBuffer hdrResultBuffer_;
+		MyRenderer.FrameBuffer gBufferBinder_;
+		MyRenderer.FrameBuffer hdrResultBuffer_;
 
 		Prim prim_;
 		Prim fxaaPrim_;
@@ -47,8 +47,8 @@ namespace Renderer
 			viewModel_ = new MainWindowViewModel();
 
 			// カメラ操作
-			ksRenderer.Camera3D.SetAt(ref camera_at_);
-			cameraCtrl_ = new CameraController(ksRenderer.Camera3D);
+			MyRenderer.Camera3D.SetAt(ref camera_at_);
+			cameraCtrl_ = new CameraController(MyRenderer.Camera3D);
 
 			InitializeTarget();
 			InitialzeSceneObject();
@@ -63,14 +63,14 @@ namespace Renderer
 			gbufferDesc_ = new Texture.InitDesc[] {
 				new Texture.InitDesc() {
 					bindFlag = TextureBuffer.BindFlag.IsRenderTarget,
-					width = ksRenderer.TargetWidth,
-					height = ksRenderer.TargetHeight,
+					width = MyRenderer.TargetWidth,
+					height = MyRenderer.TargetHeight,
 					format = SlimDX.DXGI.Format.R8G8B8A8_UNorm,
 				},
 				new Texture.InitDesc() {
 					bindFlag = TextureBuffer.BindFlag.IsRenderTarget,
-					width = ksRenderer.TargetWidth,
-					height = ksRenderer.TargetHeight,
+					width = MyRenderer.TargetWidth,
+					height = MyRenderer.TargetHeight,
 					format = SlimDX.DXGI.Format.R8G8B8A8_UNorm,
 				},
 			};
@@ -78,19 +78,19 @@ namespace Renderer
 			for (int i = 0; i < gbuffers_.Length; i++) {
 				gbuffers_[i] = new Texture(gbufferDesc_[i]);
 			}
-			gBufferBinder_ = new ksRenderer.FrameBuffer();
+			gBufferBinder_ = new MyRenderer.FrameBuffer();
 			gBufferBinder_.color_buffer_ = gbuffers_;
-			gBufferBinder_.depth_stencil_ = ksRenderer.DefaultDepthBuffer;
+			gBufferBinder_.depth_stencil_ = MyRenderer.DefaultDepthBuffer;
 
 			hdrResolveDesc_ = new Texture.InitDesc() {
 				bindFlag = TextureBuffer.BindFlag.IsRenderTarget,
-				width = ksRenderer.TargetWidth,
-				height = ksRenderer.TargetHeight,
+				width = MyRenderer.TargetWidth,
+				height = MyRenderer.TargetHeight,
 				format = SlimDX.DXGI.Format.R8G8B8A8_UNorm,
 			};
 			hdrResolveBuffer_ = new Texture(hdrResolveDesc_);
 
-			hdrResultBuffer_ = new ksRenderer.FrameBuffer();
+			hdrResultBuffer_ = new MyRenderer.FrameBuffer();
 			hdrResultBuffer_.color_buffer_ = new Texture[] { hdrResolveBuffer_ };
 			hdrResultBuffer_.depth_stencil_ = null;
 
@@ -169,7 +169,7 @@ namespace Renderer
 				gbuffers_[i].Dispose();
 				gbuffers_[i].Initialize(gbufferDesc_[i]);
 			}
-			gBufferBinder_.depth_stencil_ = ksRenderer.DefaultDepthBuffer;
+			gBufferBinder_.depth_stencil_ = MyRenderer.DefaultDepthBuffer;
 			hdrResolveBuffer_.Dispose();
 			hdrResolveDesc_.width = w;
 			hdrResolveDesc_.height = h;
@@ -199,7 +199,7 @@ namespace Renderer
 		public void UpdateDraw()
 		{
 			// レンダラ更新
-			ksRenderer.Update();
+			MyRenderer.Update();
 		}
 
 
@@ -210,28 +210,28 @@ namespace Renderer
 		/// </summary>
 		public void Draw()
 		{
+			var context = GraphicsCore.ImmediateContext;
+
 			UpdateDraw();
 
-			ksRenderer.BeginDraw();
 			{
 				// GBuffer
-				using (new ksGpuProfilePoint(ksRenderer.D3dCurrentContext, "Render GBuffer")) {
-					ksRenderer.CurrentDrawCamera = ksRenderer.Camera3D;
+				using (new ksGpuProfilePoint(context, "Render GBuffer")) {
+					MyRenderer.CurrentDrawCamera = MyRenderer.Camera3D;
 					RenderGBuffer();
 				}
 
-				var framebuffer = new ksRenderer.FrameBuffer();
+				var framebuffer = new MyRenderer.FrameBuffer();
 				var edgeBuffer = hdrResolveBuffer_;
 				// アウトライン検出
-				using (new ksGpuProfilePoint(ksRenderer.D3dCurrentContext, "Outline")) {
+				using (new ksGpuProfilePoint(context, "Outline")) {
 					framebuffer.color_buffer_ = new Texture[] { hdrResolveBuffer_ };
-					ksRenderer.BeginRender(framebuffer);
+					context.SetRenderTargets(framebuffer.color_buffer_, framebuffer.depth_stencil_);
 					prim_.GetMaterial().SetShader("Outline");
 					prim_.GetMaterial().SetShaderViewPS(0, gbuffers_[0]);
 					prim_.GetMaterial().SetShaderViewPS(1, gbuffers_[1]);
 					prim_.GetMaterial().BlendState = RenderState.BlendState.None;
 					prim_.Draw();
-					ksRenderer.EndRender();
 
 					//framebuffer.color_buffer_ = new Texture[] { gbuffers_[1] };
 					//ksRenderer.BeginRender(framebuffer);
@@ -242,11 +242,11 @@ namespace Renderer
 				}
 
 				// vertexIDによるスプライト描画
-				using (new ksGpuProfilePoint(ksRenderer.D3dCurrentContext, "LineSprite")) {
+				using (new ksGpuProfilePoint(context, "LineSprite")) {
 					framebuffer.color_buffer_ = new Texture[] { gbuffers_[0] };
-					ksRenderer.BeginRender(framebuffer);
+					context.SetRenderTargets(framebuffer.color_buffer_, framebuffer.depth_stencil_);
 					if (test) {
-						ksRenderer.D3dCurrentContext.InputAssembler.SetVertexBuffers(0, new VertexBufferBinding());
+						MyRenderer.D3dImmediateContext.InputAssembler.SetVertexBuffers(0, new VertexBufferBinding());
 						lineSpriteMaterial_.SetShaderViewVS(0, edgeBuffer);
 						lineSpriteMaterial_.SetShaderViewPS(0, lineTexture_);
 						lineSpriteMaterial_.DepthState = RenderState.DepthState.None;
@@ -254,32 +254,29 @@ namespace Renderer
 						lineSpriteMaterial_.Setup();
 						Matrix ident = Matrix.Identity;
 						ShaderManager.SetUniformParams(ref ident);
-						ksRenderer.SetRasterizerState(RenderState.RasterizerState.CullNone);
+						MyRenderer.SetRasterizerState(RenderState.RasterizerState.CullNone);
 						int instance = hdrResolveBuffer_.Width * hdrResolveBuffer_.Height;
-						ksRenderer.D3dCurrentContext.DrawInstanced(6, instance, 0, 0);
+						MyRenderer.D3dImmediateContext.DrawInstanced(6, instance, 0, 0);
 					} else {
 						prim_.GetMaterial().SetShader("Direct");
 						prim_.GetMaterial().SetShaderViewPS(0, hdrResolveBuffer_);
 						prim_.GetMaterial().BlendState = RenderState.BlendState.Normal;
 						prim_.Draw();
 					}
-					ksRenderer.EndRender();
 				}
 
 
 				// 最終レンダリング
-				ksRenderer.BeginRender();
+				MyRenderer.BeginRender();
 				{
 					// ライティング結果
-					using (new ksGpuProfilePoint(ksRenderer.D3dCurrentContext, "FXAA")) {
+					using (new ksGpuProfilePoint(context, "FXAA")) {
 						fxaaPrim_.GetMaterial().SetShaderViewPS(0, gbuffers_[0]);
 						fxaaPrim_.GetMaterial().BlendState = RenderState.BlendState.None;
 						fxaaPrim_.Draw();
 					}
 				}
-				ksRenderer.EndRender();
 			}
-			ksRenderer.EndDraw();
 		}
 
 
@@ -299,15 +296,14 @@ namespace Renderer
 		/// </summary>
 		void RenderGBuffer()
 		{
-			ksRenderer.BeginRender(gBufferBinder_);
+			var context = MyRenderer.ImmediateContext;
 
-			ksRenderer.ClearColorBuffer(gBufferBinder_.color_buffer_[0], new Color4(0.5f, 0.5f, 0.5f));
-			ksRenderer.ClearColorBuffer(gBufferBinder_.color_buffer_[1], new Color4(0));
-			ksRenderer.ClearDepthBuffer();
+			context.SetRenderTargets(gBufferBinder_.color_buffer_, gBufferBinder_.depth_stencil_);
+			context.ClearRenderTarget(gBufferBinder_.color_buffer_[0], new Color4(0.5f, 0.5f, 0.5f));
+			context.ClearRenderTarget(gBufferBinder_.color_buffer_[1], new Color4(0));
+			context.ClearDepthStencil(gBufferBinder_.depth_stencil_, 1.0f);
 
 			SceneDraw();
-
-			ksRenderer.EndRender();
 		}
 
 

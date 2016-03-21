@@ -22,8 +22,8 @@ using SlimDX;
 using SlimDX.Direct3D11;
 
 using DXMatrix = SlimDX.Matrix;
-using ksRenderer = Lib.Renderer;
-using ksGPUProfiler = Lib.Ext.GPUProfiler;
+using GraphicsCore = Lib.GraphicsCore;
+using MyGPUProfiler = Lib.Ext.GPUProfiler;
 
 namespace Renderer
 {
@@ -34,6 +34,8 @@ namespace Renderer
 	{
 		IScene scene_;
 		int profileCounter_;
+		Task renderTask_;
+		bool isRun_;
 
 		/// <summary>
 		/// 
@@ -68,10 +70,13 @@ namespace Renderer
 		/// <param name="e"></param>
 		void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
 		{
-			ksGPUProfiler.Dispose();
+			isRun_ = false;
+			renderTask_.Wait();
+
+			MyGPUProfiler.Dispose();
 			scene_.Dispose();
 			ShaderManager.Dispose();
-			ksRenderer.Dispose();
+			GraphicsCore.Dispose();
 		}
 
 
@@ -80,38 +85,75 @@ namespace Renderer
 		/// </summary>
 		public void InitializeRenderer()
 		{
+#if true
+			GraphicsCore.Initialize(renderCtrl);
+			Input.Initialize(renderCtrl);
+#else
 			int width = (int)RenderImage.DesiredSize.Width;
 			int height = (int)RenderImage.DesiredSize.Height;
 			width = (width < 128) ? 128 : width;
 			height = (height < 128) ? 128 : height;
-
-			ksRenderer.InitializeForWPF(RenderImage);
+			GraphicsCore.InitializeForWPF(RenderImage);
+			Input.Initialize(RenderImage);
+#endif
+			// シェーダ
 			ShaderManager.Initialize("asset/shader/shader.lst");
 			ShaderManager.DefaultShader = "Unlit";
-			Input.Initialize(RenderImage);
 
 			// プロファイラ
-			ksGPUProfiler.Initialize(ksRenderer.D3dDevice);
+			MyGPUProfiler.Initialize(GraphicsCore.D3dDevice);
 
 			// ライト
-			ksRenderer.LightPos = new Vector4(0, 100000, 0, 1);
+			GraphicsCore.LightPos = new Vector4(0, 100000, 0, 1);
 
 			// シーン
 			scene_ = new GameScene();
 			//scene_ = new TestScene();
 			DataContext = scene_.ViewModel;
 
+#if true
+			// リサイズコールバック
+			bool requireResize = false;
+			renderCtrl.SizeChanged += (o, e) => {
+				if (renderCtrl.Width == 0 || renderCtrl.Height == 0) {
+					return;
+				}
+				requireResize = true;
+			};
+
+			// レンダースレッド
+			isRun_ = true;
+			renderTask_ = new Task(() => {
+				while (isRun_) {
+					var context = GraphicsCore.ImmediateContext;
+
+					// リサイズ
+					if (requireResize) {
+						GraphicsCore.ResizeTargetPanel((int)renderCtrl.Width, (int)renderCtrl.Height);
+						scene_.ScreenSizeChanged((int)renderCtrl.Width, (int)renderCtrl.Height);
+						requireResize = false;
+					}
+					scene_.Update();
+					MyGPUProfiler.BeginFrameProfiling(context);
+					scene_.Draw();
+					MyGPUProfiler.EndFrameProfiling(context);
+					GraphicsCore.Present();
+					UpdateProfiler();
+				};
+			});
+			renderTask_.Start();
+#else
 			// リサイズコールバック
 			RenderImage.SizeChanged += (o, e) => {
 				if (e.NewSize.Width == 0 || e.NewSize.Height == 0) {
 					return;
 				}
-				ksRenderer.ResizeTargetPanel((int)e.NewSize.Width, (int)e.NewSize.Height);
+				GraphicsCore.ResizeTargetPanel((int)e.NewSize.Width, (int)e.NewSize.Height);
 				scene_.ScreenSizeChanged((int)e.NewSize.Width, (int)e.NewSize.Height);
 			};
 			// 初回描画後に一回テクスチャを更新
 			ContentRendered += (o, e) => {
-				ksRenderer.ResizeTargetPanel((int)RenderImage.DesiredSize.Width, (int)RenderImage.DesiredSize.Height);
+				GraphicsCore.ResizeTargetPanel((int)RenderImage.DesiredSize.Width, (int)RenderImage.DesiredSize.Height);
 				scene_.ScreenSizeChanged((int)RenderImage.DesiredSize.Width, (int)RenderImage.DesiredSize.Height);
 			};
 
@@ -119,12 +161,13 @@ namespace Renderer
 			//ComponentDispatcher.ThreadIdle += (o, e) => {
 			CompositionTarget.Rendering += (o, e) => {
 				scene_.Update();
-				ksGPUProfiler.BeginFrameProfiling(ksRenderer.D3dCurrentContext);
+				MyGPUProfiler.BeginFrameProfiling(GraphicsCore.D3dCurrentContext);
 				scene_.Draw();
-				ksGPUProfiler.EndFrameProfiling(ksRenderer.D3dCurrentContext);
-				ksRenderer.Present();
-				UpdateProfiler();				
+				MyGPUProfiler.EndFrameProfiling(GraphicsCore.D3dCurrentContext);
+				GraphicsCore.Present();
+				UpdateProfiler();
 			};
+#endif
 		}
 
 
@@ -139,9 +182,9 @@ namespace Renderer
 				var list = scene_.ViewModel.ProfileObjectList;
 				list.Clear();
 
-				if (ksGPUProfiler.m_CurrentFrameProfilerTree != null) {
-					Action<ksGPUProfiler.ProfilerTreeMember, String> processLevel = null;
-					processLevel = (ksGPUProfiler.ProfilerTreeMember treeMember, String level) => {
+				if (MyGPUProfiler.m_CurrentFrameProfilerTree != null) {
+					Action<MyGPUProfiler.ProfilerTreeMember, String> processLevel = null;
+					processLevel = (MyGPUProfiler.ProfilerTreeMember treeMember, String level) => {
 						string finalName = level + treeMember.m_Name;
 						var obj = new ProfileObject();
 						obj.Name = finalName;
@@ -151,7 +194,7 @@ namespace Renderer
 							processLevel(v, level + "  ");
 						}
 					};
-					processLevel(ksGPUProfiler.m_CurrentFrameProfilerTree, "");
+					processLevel(MyGPUProfiler.m_CurrentFrameProfilerTree, "");
 				}
 				profileCounter_ = 30;
 				return;
